@@ -1,0 +1,74 @@
+Build Phase 3 of the Women Business Empires app: the member dashboard.
+
+Important:
+Do not change the existing quiz, report, compatibility, foundation, signup, login, or authentication logic.
+Do not connect new dashboard data to Supabase yet.
+Use localStorage for this first version.
+Keep the existing black and gold premium WBE design.
+Do not change global colors across the whole app in this task.
+
+If anything conflicts with existing routing or auth, keep existing logic and only add the dashboard route.
+
+So that section should be:
+
+Use placeholder values:
+Empire Score: 0
+Day Streak: 1
+Current Phase: Foundation
+
+Create a new route:
+/dashboard
+
+After login, users should go to /dashboard.
+
+If the user has no saved Empire Path in localStorage, show a one-time Path Selection screen first.
+
+Path Selection Screen:
+Title: Welcome to Your Empire.
+Subtitle: You have done the work. Now choose your Empire Path and let’s build.
+Gold italic line: Your Entrepreneur DNA already revealed who you are. Here is where you belong.
+
+Show three cards:
+
+THE BUILDER
+Description: You build through systems, structure, and scalable income. You feel strongest when things are organized and moving forward.
+DNA types: Strategic Builder · Action Taker · Legacy Builder
+Button: This Is My Path
+
+THE CREATOR
+Description: You build through ideas, content, and expression. You need space to create and share your message with the world.
+DNA types: Visionary Leader · Knowledge Authority · Freedom Strategist
+Button: This Is My Path
+
+THE CONNECTOR
+Description: You build through people, trust, and relationships. You thrive when you are connecting and creating belonging.
+DNA types: Community Builder · Influence Creator
+Button: This Is My Path
+
+When a path is selected:
+Save it in localStorage as wbe_empire_path.
+Save first path selection completed as true.
+Route to /dashboard.
+Never show path selection again unless localStorage is cleared.
+
+Dashboard Sections:
+
+1. Header
+Left: WBE
+Right: Welcome back, [First Name] · [DNA Type]
+
+2. Empire Activation
+Show first each day unless already completed today.
+Use localStorage to store activation date.
+Button: I’m Ready. Let’s Build.
+After click, collapse and reveal full dashboard.
+
+3. Empire Status Bar
+Three cards:
+Empire Score
+Day Streak
+Current Phase
+
+Use placeholder values:
+Empire Score: 0
+Day Streak:

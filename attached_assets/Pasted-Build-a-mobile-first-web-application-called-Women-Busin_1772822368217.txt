@@ -1,0 +1,104 @@
+Build a mobile-first web application called Women Business Empires.
+
+Brand identity:
+Women Business Empires
+WBE
+We Build Empires
+
+This platform helps women discover what type of online business they are most aligned with based on their personality, strengths, and entrepreneurial style.
+
+The first version should be simple, elegant, and focused on one core experience: discovering a user’s Entrepreneur DNA.
+
+Design requirements:
+• mobile-first layout
+• modern, minimal, premium design
+• black background
+• gold accents to represent power and success
+• soft pink accents matching a feminine luxury brand
+• clean typography
+• smooth transitions and simple navigation
+• elegant progress animations
+
+Build Version 1 only with the following screens:
+
+1. Welcome / splash screen
+Introduce the concept of discovering your Entrepreneur DNA.
+
+2. Intro screen
+Explain briefly that the quiz will analyze personality, strengths, and entrepreneurial tendencies to recommend the best online business path.
+
+3. Account creation
+Allow users to sign up with email and password.
+
+4. Entrepreneur DNA quiz
+Create a 25-question multiple choice quiz.
+Each question appears on its own screen with a progress bar.
+
+Questions should analyze:
+• leadership style
+• independence vs collaboration
+• communication style
+• risk tolerance
+• creativity
+• desire for freedom
+• strategic thinking
+• teaching ability
+• motivation style
+
+5. DNA analysis loading screen
+After finishing the quiz show a short animated “Analyzing your Entrepreneur DNA” screen.
+
+6. Result reveal screen
+Assign one of the following Entrepreneur DNA identities:
+
+Empire Architect
+Visionary Leader
+Influence Catalyst
+Community Sovereign
+Knowledge Guardian
+Momentum Commander
+Freedom Alchemist
+Legacy Builder
+
+This reveal moment should feel emotional and powerful.
+
+7. Full DNA report page
+Include sections:
+
+• identity title
+• rarity percentage
+• personality explanation
+• natural strengths
+• skills to develop
+• explanation of why past business attempts may not have worked
+• future potential
+
+8. Business compatibility scores
+Show percentages for:
+
+Affiliate Empire
+Digital Product Empire
+Personal Brand Empire
+Knowledge Empire
+Community Empire
+
+9. Premium teaser screen
+Explain that the platform can guide the user daily to build her empire based on her DNA.
+
+This screen should invite the user to unlock the full Empire Journey in the future.
+
+Technical requirements:
+
+• build as a modern web app
+• mobile responsive
+• simple database structure for users and quiz results
+• clean navigation between screens
+• use placeholder logic for scoring the quiz results
+• make it easy to expand later
+
+Important:
+Do NOT build payments, community features, AI chat, or mastermind groups yet.
+
+Only build the Version 1 foundation and a polished user experience.
+
+At the end, generate a preview so the app can be tested.

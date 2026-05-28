@@ -1,0 +1,42 @@
+Stop all cosmetic color work for now.
+
+We need to fix cross device Supabase authentication and progress recovery.
+
+Current bug:
+A user starts the flow on laptop, creates a new account, completes steps before email verification, then confirms the Supabase email link on phone. The user appears inside Supabase Auth, but when returning to the laptop and logging in with that same email/password, the app does not recognize the account or restore the workflow.
+
+This means the app is relying too much on localStorage/device state instead of Supabase Auth and database records.
+
+Required behavior:
+1. Supabase Auth must be the source of truth for whether the user exists.
+2. On every login, signup confirmation, page load, and email confirmation return, call the existing /api/auth/sync endpoint or equivalent sync function.
+3. If the user exists in Supabase Auth but is missing from public.users, create/upsert the public.users row.
+4. If the user has quiz progress/results in localStorage, sync it into the database.
+5. If the user has database quiz_results, restore the result from the database even when localStorage is empty.
+6. If the user is confirmed on phone but logs in later on laptop, the laptop must still recognize the account and route to the correct workflow step.
+7. Do not depend on localStorage alone for account recognition or routing.
+8. Do not create duplicate users.
+9. Do not create duplicate quiz_results.
+10. Do not break existing working routes.
+
+Please inspect:
+- Supabase login/signup logic
+- email confirmation redirect handling
+- welcome.tsx
+- signup.tsx
+- intro.tsx
+- progress.ts
+- /api/auth/sync
+- storage.ensureUserRow
+- storage.ensureQuizResult
+- public.users table columns
+- public.quiz_results table columns
+- any place where localStorage is used as the only routing source
+
+Fix the architecture so authenticated user identity comes from Supabase Auth, persisted app profile comes from public.users, quiz result comes from public.quiz_results, and localStorage is only a temporary backup.
+
+After fixing, explain:
+- which file decides routing after login
+- which file syncs Supabase Auth users to public.users
+- how cross device login now restores the user
+- how to test laptop signup + phone confirmation + laptop login

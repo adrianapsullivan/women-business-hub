@@ -1,0 +1,130 @@
+You are improving a React + Vite + Wouter web application called Women Business Hub.
+
+IMPORTANT RULES
+
+Do not change the UI layout, styling, or visual design.
+Do not remove or break existing routes or pages.
+Only fix routing logic and quiz state handling.
+
+The goal is to fix the onboarding funnel so it behaves correctly on both desktop and mobile.
+
+CURRENT PROBLEM
+
+When testing on mobile:
+
+1. The first page loads correctly.
+2. The Intro page is skipped and the user goes directly to the quiz.
+3. After finishing the quiz, the Intro page loads.
+4. When clicking the Intro page CTA, the user is sent back to the first quiz question.
+
+This means the app is not correctly saving and checking quiz completion state.
+
+We need to fix the funnel state logic.
+
+--------------------------------------------------
+
+SECTION 1 — TRACK FUNNEL STATE
+
+The app must track three states using localStorage:
+
+wbe_user  
+quiz_completed  
+report_unlocked  
+
+These values control routing through the funnel.
+
+--------------------------------------------------
+
+SECTION 2 — SAVE QUIZ COMPLETION
+
+When the user finishes the quiz, store the completion flag before navigating away.
+
+Add this when the final question is submitted:
+
+localStorage.setItem("quiz_completed", "true")
+
+Also store answers:
+
+localStorage.setItem("quiz_answers", JSON.stringify(answers))
+
+Then navigate to:
+
+/reveal
+
+Once quiz_completed is true, the user must NEVER be redirected back to /quiz unless they intentionally restart the quiz.
+
+--------------------------------------------------
+
+SECTION 3 — FIX INTRO PAGE LOGIC
+
+Currently the Intro page redirects to the quiz whenever a user exists.
+
+This is incorrect.
+
+Intro should only redirect if the quiz has already been completed.
+
+Correct behavior:
+
+If quiz_completed is true → skip intro and continue to reveal or report.
+
+If quiz_completed is false → show intro page normally.
+
+Remove any logic that redirects simply because wbe_user exists.
+
+--------------------------------------------------
+
+SECTION 4 — GLOBAL ROUTING RULES
+
+Update routing logic across the app to follow this order:
+
+If no user exists → redirect to /signup
+
+If user exists AND quiz_completed is false → redirect to /quiz
+
+If quiz_completed is true AND report_unlocked is false → redirect to /share-dna or /reveal
+
+If report_unlocked is true → redirect to /premium
+
+This ensures users always continue where they left off.
+
+--------------------------------------------------
+
+SECTION 5 — PREVENT QUIZ RESET
+
+Ensure quiz progress is not lost when navigating between pages.
+
+Answers should already be saved in:
+
+quiz_answers
+
+When the quiz loads:
+
+If quiz_answers exists, restore the saved answers and resume the quiz state.
+
+Do not reset quiz state unless the user intentionally restarts the quiz.
+
+--------------------------------------------------
+
+SECTION 6 — MOBILE CONSISTENCY
+
+The funnel must behave the same on mobile and desktop.
+
+localStorage should be the only source of truth for funnel progress.
+
+Do not add device-specific routing logic.
+
+--------------------------------------------------
+
+FINAL GOAL
+
+The funnel should behave like this for a new user:
+
+Welcome  
+→ Intro  
+→ Quiz  
+→ Reveal  
+→ Share DNA  
+→ Unlock Report  
+→ Empire Journey
+
+Returning users should always resume where they left off instead of restarting the quiz.

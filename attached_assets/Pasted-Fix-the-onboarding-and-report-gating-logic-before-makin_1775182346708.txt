@@ -1,0 +1,96 @@
+Fix the onboarding and report gating logic before making any more copy or design changes.
+
+Important:
+Do not redesign the app.
+Do not change the visual style unless required to restore previously working layout.
+Focus on logic, flow, and restoring the locked report card layout.
+
+There are 4 issues that must be fixed.
+
+1. RESTORE THE UNLOCK CARD LAYOUT
+
+The locked “Unlock My Full DNA Report” section regressed and is back to the broken version where the lower text gets cut and spacing looks wrong.
+
+Restore the previously fixed layout so that:
+- the icon is fully visible
+- the button is fully visible
+- the supporting text under the button is fully visible
+- no text is clipped
+- spacing is clean and centered
+- the unlock card looks stable on mobile
+
+Do not redesign it.
+Just fix the regression and restore the working version.
+
+2. RECOGNIZE EXISTING USERS
+
+If a user already has a Supabase account and is already authenticated, the app must detect that on page load.
+
+If a user is authenticated and email is confirmed:
+- do not ask her to create an account again
+- do not show the locked signup wall
+- allow access to the unlocked report and correct next step
+
+If a user is authenticated but not yet email confirmed:
+- keep her in the confirmation state
+- do not unlock the full report yet
+
+3. ENFORCE EMAIL CONFIRMATION BEFORE UNLOCKING RESULTS
+
+Right now the app sends the Supabase confirmation email but still continues to the next page before confirmation.
+
+This must be fixed.
+
+Required behavior:
+- after signup, user must go to a “Check Your Email to Continue” step
+- the full report must remain locked until Supabase confirms the user
+- do not allow the app to continue into the unlocked report flow unless email_confirmed_at is present
+- after the user clicks the Supabase email link and returns, the app should recheck auth state and email confirmation
+- only then unlock the full report
+
+Use Supabase auth state and confirmed email status as the source of truth.
+Do not simulate confirmation.
+Do not bypass confirmation with local state alone.
+
+4. SEPARATE THE TWO CTAS PROPERLY
+
+Do not place these two actions on the same screen:
+- Unlock My Full DNA Report
+- Continue to My Empire Path
+
+Correct flow must be:
+
+Locked DNA Result Page
+→ only one main CTA: "Unlock My Full DNA Report"
+
+After email confirmation and full report access
+→ a soft transition CTA can appear: "Continue to My Empire Path"
+
+Later in the journey
+→ separate next stage CTA only after Phase 1 completion
+
+Do not show competing primary buttons on the same screen.
+
+TECHNICAL REQUIREMENTS
+
+- Use Supabase auth session and user state on page load
+- Recheck user state after redirect from email confirmation
+- Gate the unlocked report by authenticated user plus confirmed email
+- Keep locked version visible until confirmed
+- Remove any local bypass that lets the user continue without confirmed email
+- Preserve the current premium dark styling unless necessary to restore the working unlock card layout
+
+DELIVERABLE
+
+Please fix:
+- the broken unlock card layout
+- existing user recognition
+- real email confirmation gating
+- CTA separation logic
+
+Then verify in preview:
+1. new unconfirmed user cannot access unlocked report
+2. confirmed user can access unlocked report
+3. existing confirmed user is recognized on reload
+4. unlock card text is no longer cut
+5. only one main CTA appears per stage

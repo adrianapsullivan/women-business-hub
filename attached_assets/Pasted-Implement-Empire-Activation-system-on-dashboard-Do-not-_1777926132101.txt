@@ -1,0 +1,122 @@
+Implement Empire Activation system on dashboard.
+
+Do not change UI layout.
+Do not change existing mission system.
+Do not change authentication or routing.
+Do not modify working Supabase logic.
+
+Only add the activation layer above the dashboard.
+
+---
+
+1. DAILY ACTIVATION STATE
+
+Add to user profile:
+- last_activation_date (date)
+- activated_today (boolean derived from date)
+
+Logic:
+- If last_activation_date !== today → show activation section
+- If last_activation_date === today → skip and show dashboard directly
+
+---
+
+2. ACTIVATION SECTION (TOP OF DASHBOARD)
+
+Show ONLY if user has not activated today.
+
+Add a full-width card above Empire Status.
+
+Content:
+- Label: EMPIRE ACTIVATION
+- Subtext: “Start here. Every single day.”
+
+Dynamic daily message (rotate by day of week):
+
+Monday:
+“See your business running. See the income coming in. That is already yours.”
+
+Tuesday:
+“You are not building from scratch. You are claiming what was always meant for you.”
+
+Wednesday:
+“Close your eyes. See the life on the other side of consistency. She is you.”
+
+Thursday:
+“Every woman who has what you want once stood exactly where you are.”
+
+Friday:
+“You made it through another week of building. That is not small.”
+
+Saturday:
+“Rest is part of building. You are not behind.”
+
+Sunday:
+“A new week begins tomorrow. You already know what to do.”
+
+---
+
+3. AFFIRMATION BASED ON DNA TYPE
+
+Show under message.
+
+Map DNA type to affirmation:
+
+Strategic Builder:
+“I build systems that create unstoppable momentum.”
+
+Visionary Leader:
+“I see the future clearly and I lead others toward it.”
+
+Influence Creator:
+“I attract the right people by being authentically me.”
+
+Community Builder:
+“I create belonging and turn connection into empire.”
+
+Knowledge Authority:
+“My expertise is my currency and I share it powerfully.”
+
+Action Taker:
+“I move first. I figure it out as I go.”
+
+Freedom Strategist:
+“I build on my terms. Freedom is my business model.”
+
+Legacy Builder:
+“Everything I build today becomes what I leave behind.”
+
+---
+
+4. ACTIVATION BUTTON
+
+Button text:
+“I’m Ready. Let’s Build.”
+
+On click:
+- Save today’s date to last_activation_date
+- Mark activated_today = true
+- Smoothly hide/collapse activation section
+- Reveal full dashboard
+
+---
+
+5. BEHAVIOR RULES
+
+- Activation shows once per day only
+- After refresh → remains hidden if already activated
+- After logout/login same day → remains hidden
+- Next day → shows again
+
+---
+
+6. NO SIDE EFFECTS
+
+Do not trigger any additional Supabase loops.
+Do not modify mission completion.
+Do not reset score or streak.
+
+---
+
+Goal:
+Add emotional daily activation layer without breaking existing system.

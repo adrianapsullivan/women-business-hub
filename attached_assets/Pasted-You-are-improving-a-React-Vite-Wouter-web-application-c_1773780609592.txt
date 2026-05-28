@@ -1,0 +1,280 @@
+You are improving a React + Vite + Wouter web application called Women Business Hub.
+
+The app currently has this funnel:
+
+Welcome  
+→ Intro  
+→ Quiz  
+→ Reveal  
+→ Report  
+→ Empire Journey (Offer / Waitlist)
+
+The system already stores user data in localStorage with keys such as:
+
+wbe_user  
+quiz_answers  
+dna_result  
+
+The quiz produces an Entrepreneur DNA type such as:
+
+Strategic Builder  
+Visionary  
+Creator  
+Operator  
+
+The goal of this task is to increase viral growth, engagement, and conversion by improving the funnel and adding a DNA share system.
+
+Do NOT break the existing routing.
+
+---
+
+SECTION 1 — ADD VIRAL SHARE STEP
+
+Add a new step after the Reveal page and before the full Report unlock.
+
+New flow:
+
+Welcome  
+→ Intro  
+→ Quiz  
+→ Reveal  
+→ Share Your DNA  
+→ Unlock Full Report  
+→ Empire Journey
+
+Create a new page:
+
+/share-dna
+
+This page should:
+
+1. Read the DNA result from localStorage:
+   dna_result
+
+2. Display a large identity card:
+
+"Your Entrepreneur DNA"
+
+Example output:
+
+Strategic Builder  
+The Systems Architect
+
+Description example:
+
+"You scale businesses through systems, automation, and strategic leverage."
+
+3. Add a styled DNA share card component that looks like a luxury dark theme card with gold accent colors matching the existing UI.
+
+The card should include:
+
+Title: Entrepreneur DNA  
+DNA Name  
+Archetype Title  
+Short description
+
+---
+
+SECTION 2 — SHARE BUTTONS
+
+Under the card add four buttons:
+
+Share on Facebook  
+Share on Instagram  
+Share on TikTok  
+Copy My DNA Result
+
+Each button must work like this:
+
+FACEBOOK  
+Open the Facebook share URL with the quiz link:
+
+https://www.facebook.com/sharer/sharer.php?u=[QUIZ_LINK]
+
+Suggested share text:
+
+"My Entrepreneur DNA is [DNA TYPE].
+
+Apparently this explains exactly how I build businesses.
+
+Take the test here:
+[link]"
+
+INSTAGRAM  
+Since Instagram does not allow auto sharing:
+
+Button should:
+
+1. Download the DNA share card image
+2. Copy a caption to clipboard
+
+Caption example:
+
+"My Entrepreneur DNA is [DNA TYPE].
+
+This quiz actually nailed how I think about building a business.
+
+Take the test:
+[link]"
+
+TIKTOK  
+Same behavior as Instagram:
+
+Download image  
+Copy caption  
+
+COPY MY DNA RESULT  
+
+Copy to clipboard:
+
+"My Entrepreneur DNA is [DNA TYPE].
+
+Apparently this means I build businesses through [DNA_DESCRIPTION].
+
+Take the test here:
+[link]"
+
+Display a small toast:
+
+"DNA result copied."
+
+---
+
+SECTION 3 — DNA CARD GENERATOR
+
+Create a component:
+
+DNAShareCard
+
+It should generate a styled card dynamically from:
+
+dnaType  
+dnaTitle  
+dnaDescription  
+themeColor
+
+Example mapping:
+
+Strategic Builder  
+title: Systems Architect  
+color: gold
+
+Visionary  
+title: Empire Architect  
+color: purple
+
+Creator  
+title: Magnetic Brand  
+color: pink
+
+Operator  
+title: Execution Powerhouse  
+color: blue
+
+---
+
+SECTION 4 — VIRAL TRIGGER
+
+Under the share buttons display this line:
+
+"97% of women building online businesses don't know their Entrepreneur DNA."
+
+Then show a CTA button:
+
+"Unlock My Full DNA Report"
+
+This should route to:
+
+/report
+
+---
+
+SECTION 5 — FUNNEL OPTIMIZATION
+
+Add small improvements across the funnel:
+
+REVEAL PAGE
+
+Add a strong emotional moment:
+
+"Everything about how you think about business now makes sense."
+
+Then:
+
+"You are a [DNA TYPE]."
+
+Add CTA:
+
+"See Your Full DNA Report"
+
+---
+
+REPORT PAGE
+
+Before showing the full report:
+
+Add a gate:
+
+"If you want the full blueprint for building your empire using your Entrepreneur DNA, unlock your report."
+
+If user is not logged in:
+
+redirect to:
+
+/signup?redirect=/report
+
+---
+
+SECTION 6 — RETURNING USER EXPERIENCE
+
+Improve the Welcome page logic.
+
+If a returning user exists:
+
+wbe_user exists in localStorage
+
+Then route user based on progress:
+
+quiz_answers missing → /quiz  
+dna_result exists but report not unlocked → /share-dna  
+report unlocked → /premium
+
+---
+
+SECTION 7 — PROGRESS SAFETY
+
+Add auto-save to quiz answers.
+
+Each answer should store to:
+
+quiz_answers
+
+If the user refreshes or leaves, they should resume where they left.
+
+---
+
+SECTION 8 — POLISH
+
+Add subtle UI improvements:
+
+1. DNA card should animate slightly on load
+2. Share buttons should have icons
+3. Use existing UI theme (dark + gold)
+4. Add toast messages for copy/share events
+5. Maintain responsive mobile layout
+
+---
+
+FINAL GOAL
+
+Transform the quiz from a simple funnel into a viral identity engine where users:
+
+Discover their Entrepreneur DNA  
+Share their DNA result  
+Invite others to take the quiz  
+Unlock their business blueprint  
+Join the Empire Journey
+
+Do not remove existing pages or routes.
+
+Only extend functionality.

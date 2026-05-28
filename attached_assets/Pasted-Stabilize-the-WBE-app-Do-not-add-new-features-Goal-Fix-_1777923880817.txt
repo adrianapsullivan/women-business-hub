@@ -1,0 +1,62 @@
+Stabilize the WBE app. Do not add new features.
+
+Goal:
+Fix current bugs with the smallest possible changes and do not break working authentication, dashboard design, path selection, or DNA report content.
+
+Before changing code:
+1. Inspect current routing, dashboard progress logic, DNA report logic, and Supabase requests.
+2. Identify what is causing repeated Supabase calls and 429 Too Many Requests.
+3. Identify why the app sometimes lands on /report instead of /dashboard.
+4. Identify why mission completion/score/streak are not consistently restored.
+5. Identify why weekly goals appear pre completed.
+
+Then make minimal fixes only.
+
+Rules:
+Do not redesign UI.
+Do not change auth method.
+Do not change quiz questions.
+Do not change DNA report content.
+Do not add new pages.
+Do not touch ClickFunnels links.
+Do not create duplicate tables if existing tables can be used.
+
+Fix requirements:
+
+1. Stop Supabase request loops
+- No repeated PUT, PATCH, insert, or update calls on page render.
+- Dashboard should fetch progress once on load.
+- DNA report should fetch/read data once on load.
+- Saving should only happen when user clicks an action button.
+- No 429 errors should appear after refresh.
+
+2. Correct post login routing
+- Existing users with selected path or progress should go to /dashboard.
+- New users with no selected path should see path selection.
+- /report should not be used as a required onboarding step after login.
+- DNA report should only open when user clicks View from dashboard.
+
+3. Fix daily mission persistence
+- Mark Complete should save to Supabase once.
+- Button should stay Completed Today after refresh and logout/login.
+- Empire Score and Day Streak should restore from Supabase.
+- Do not reset score/streak to 0 if saved data exists.
+
+4. Fix weekly goals
+- Weekly goals should not be pre completed for new users.
+- Only show checked goals if the user actually checked them and they were saved.
+
+5. Keep dashboard source of truth clean
+- Supabase should be source of truth for path, score, streak, mission completion, and weekly goals.
+- localStorage can be fallback only, not the main source.
+
+Final test checklist:
+- Create/login user
+- User lands on dashboard after path is selected
+- Refresh dashboard → no 429 errors
+- Click Mark Complete once → score +10 and button Completed Today
+- Refresh → still Completed Today and score remains
+- Logout/login → still Completed Today and score remains
+- Click DNA View → read only DNA report opens
+- Back to Dashboard works
+- No repeated Supabase requests in console

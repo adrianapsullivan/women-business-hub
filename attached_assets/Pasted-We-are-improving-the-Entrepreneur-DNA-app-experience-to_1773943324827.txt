@@ -1,0 +1,165 @@
+We are improving the Entrepreneur DNA app experience to make it feel more premium, increase shareability, and increase user conversion. Please implement the following improvements carefully without breaking the current routing or flow.
+
+Important:
+Do NOT change the current page structure or navigation flow.
+Do NOT modify the quiz logic.
+Only enhance UI, copy, and user experience.
+
+Current flow must remain:
+
+Intro → Quiz → DNA Reveal → Partial Report → Account Creation → Full Report → Business Compatibility → Empire Journey
+
+⸻
+
+1. Add Progress Indicator Across the Journey
+
+Users should always understand where they are in the experience.
+
+Add a small progress indicator at the top of pages after the quiz.
+
+Example:
+
+Step 1 of 5 — Your DNA Reveal
+Step 2 of 5 — Your DNA Report
+Step 3 of 5 — Business Compatibility
+Step 4 of 5 — Empire Path
+Step 5 of 5 — Start Your Journey
+
+Use a subtle design consistent with the current dark luxury UI.
+
+⸻
+
+2. Improve the DNA Reveal Page
+
+Enhance the emotional impact of the reveal.
+
+Under the DNA type title add this line:
+
+“Your answers reveal a rare pattern of entrepreneurial thinking.”
+
+Do not include fake statistics or percentages.
+
+Add a small DNA Identity Badge under the title.
+
+Example:
+
+Strategic Builder
+Entrepreneur DNA Identity
+
+This badge should be visually elegant and shareable.
+
+⸻
+
+3. Improve Share Section
+
+Currently there are share buttons. Improve this section to encourage sharing.
+
+Add the following message above the share buttons:
+
+“Your Entrepreneur DNA is unique. Share the assessment with another woman ready to build something of her own.”
+
+Keep the buttons for:
+
+Facebook
+Instagram
+TikTok
+Copy Link
+
+Do not remove the current design.
+
+⸻
+
+4. Add Shareable DNA Card (Important)
+
+Create a shareable visual card component that users can download or share.
+
+The card should include:
+
+Entrepreneur DNA
+DNA Type (example: Strategic Builder)
+Short description (one sentence from the personality section)
+
+Design style:
+
+Dark background
+Gold accent
+Minimal premium style
+
+Add a button:
+
+Download My DNA Card
+
+This will allow users to share their identity online.
+
+⸻
+
+5. Improve Future Potential Section
+
+Update the CTA text.
+
+Change:
+
+“View Business Compatibility”
+
+To:
+
+“See The Business Models Built For Your DNA”
+
+This creates more curiosity and increases click-through.
+
+⸻
+
+6. Improve Business Compatibility Page
+
+At the top of the page add this message:
+
+“Most entrepreneurs struggle because they build the wrong type of business for their natural strengths. Your DNA reveals which business models are most aligned with how you think.”
+
+Do not change the compatibility logic or percentages.
+
+Keep the existing empire types:
+
+Digital Product Empire
+Affiliate Empire
+Knowledge Empire
+Personal Brand Empire
+Community Empire
+
+⸻
+
+7. Improve Empire Journey Section
+
+Update the CTA button.
+
+Change:
+
+“Start My Empire Journey”
+
+To:
+
+“Activate My Empire Path”
+
+Do not change page routing.
+
+⸻
+
+8. Preserve Existing Architecture
+
+Do not change:
+
+quiz logic
+routing
+authentication
+DNA type calculation
+
+Only enhance UI and messaging.
+
+⸻
+
+9. Final Check
+
+After implementing the updates:
+
+Verify that no routing conflicts exist.
+Verify that quiz flow still works correctly.
+Verify that account creation still redirects to the report page.

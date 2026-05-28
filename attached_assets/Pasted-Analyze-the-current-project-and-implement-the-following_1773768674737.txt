@@ -1,0 +1,132 @@
+Analyze the current project and implement the following fixes and improvements to the onboarding flow.
+
+This project is a React + Vite app using Wouter routing.
+
+The goal is to make onboarding behave like a real SaaS product with proper login persistence, quiz completion logic, and quiz resume capability.
+
+Implement the following:
+	1.	Fix onboarding redirect logic
+
+Current issue: when the preview refreshes the app opens /quiz instead of deciding the correct destination based on user state.
+
+Desired behavior:
+	•	If no user in localStorage → show / (welcome page)
+	•	If user exists but quiz not completed → redirect to /quiz
+	•	If user exists and quiz completed → redirect to /hub
+
+Implement a central auth gate that runs when the app loads. The best place is inside App.tsx using a small redirect component or useEffect.
+
+Do NOT use window.location.href. Use the router navigation instead.
+
+Use these keys:
+
+localStorage.getItem("wbe_user")
+localStorage.getItem("wbe_quiz_completed")
+
+2.	Ensure quiz completion is saved
+
+In quiz.tsx, when the quiz finishes (last question), store completion:
+
+localStorage.setItem("wbe_quiz_completed", "true")
+
+Then navigate to:
+
+/analyzing
+
+Make sure this runs regardless of whether the quiz submits to the backend.
+	3.	Fix the login flow
+
+Current issue: clicking
+
+“Already have an account? Sign in”
+
+first shows the Create Account screen and only then shows login.
+
+Fix this so /signup?mode=signin opens directly in login mode.
+
+Initialize mode based on URL query instead of switching mode in useEffect.
+	4.	Implement quiz auto-resume
+
+Add the ability to resume the quiz where the user left off.
+
+When a user answers a question:
+
+Save progress in localStorage:
+
+wbe_quiz_progress
+
+Store:
+	•	current question index
+	•	answers object
+
+When quiz.tsx loads:
+
+If progress exists:
+
+Restore:
+	•	answers
+	•	current question
+	•	selected state
+
+When the quiz finishes:
+
+Clear the progress key.
+	5.	Improve redirect after login
+
+When signup or login succeeds:
+
+If the user has completed the quiz → go to /hub
+
+If the user has not completed the quiz → go to /quiz
+	6.	Prevent redirect loops
+
+Ensure redirects are executed only once during app load and do not cause flashing or infinite refresh.
+	7.	Clean routing
+
+Confirm that the router includes these routes and that they function correctly:
+
+/
+ /intro
+ /signup
+ /quiz
+ /analyzing
+ /reveal
+ /report
+ /compatibility
+ /premium
+ /foundation
+ /hub
+
+Ensure that /hub loads the hub page correctly from:
+
+client/src/hub.tsx
+
+8.	Code quality
+
+Keep the architecture simple:
+	•	do not duplicate redirect logic in multiple pages
+	•	place onboarding logic in one centralized place
+	•	avoid using window.location
+
+	9.	Output
+
+After implementing fixes, summarize:
+	•	what files were modified
+	•	what logic was added
+	•	confirm onboarding flow works
+
+Expected final behavior:
+
+New visitor
+→ Welcome
+→ Signup
+→ Quiz
+→ Analyzing
+→ Results
+→ Hub
+
+Returning user with unfinished quiz
+→ Resume quiz
+
+Returning user with completed quiz
+→ Hub

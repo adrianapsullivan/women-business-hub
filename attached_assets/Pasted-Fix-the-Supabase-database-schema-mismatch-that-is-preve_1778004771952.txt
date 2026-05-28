@@ -1,0 +1,95 @@
+Fix the Supabase database schema mismatch that is preventing user data and quiz results from saving.
+
+Do not change UI.
+Do not change routing yet.
+Do not change dashboard.
+Do not change quiz flow.
+Only fix database schema and backend sync accuracy.
+
+CURRENT LOG ERRORS:
+- Could not find the 'first_name' column of 'users' in the schema cache
+- Could not find the 'answers' column of 'quiz_results' in the schema cache
+
+CURRENT TABLES:
+public.users currently has:
+- id
+- email
+- created_at
+
+public.quiz_results currently has:
+- id
+- user_id
+- result
+- created_at
+
+REQUIRED FIX:
+
+1. Update public.users table schema to include these columns if they do not already exist:
+
+- first_name text
+- dna_type text
+- empire_path text
+- onboarding_complete boolean default false
+- membership_status text default 'prospect'
+- current_step text default 'quiz'
+- updated_at timestamp with time zone default now()
+
+2. Update public.quiz_results table schema to include these columns if they do not already exist:
+
+- answers jsonb
+- dna_type text
+- completed_at timestamp with time zone default now()
+- updated_at timestamp with time zone default now()
+
+3. Update backend sync logic so it matches the real schema.
+
+POST /api/auth/sync should:
+
+- get authenticated user data from request/session
+- upsert into public.users using id = auth user id
+- save:
+  - id
+  - email
+  - first_name from auth metadata if available
+  - dna_type from auth metadata if available
+  - updated_at = now()
+
+4. Fix quiz_results creation:
+
+Only create quiz_results if a row does not already exist for user_id.
+
+When creating quiz_results, save:
+- user_id
+- result or dna_type from auth metadata
+- dna_type from auth metadata
+- answers from metadata or localStorage payload if available
+- completed_at = now()
+- updated_at = now()
+
+5. IMPORTANT:
+If an insert or upsert fails, do NOT return ok: true.
+
+The endpoint must return:
+- ok: false
+- error message
+- which table failed
+
+Only return ok: true if the database write actually succeeds.
+
+6. Add console logs for debugging:
+
+- "sync started"
+- "auth user id"
+- "users upsert success"
+- "quiz_results exists"
+- "quiz_results insert success"
+- "sync failed" with error details
+
+7. Do not create duplicate users.
+8. Do not create duplicate quiz_results.
+9. Do not overwrite existing quiz_results if one already exists.
+10. Do not route to dashboard from this endpoint.
+
+GOAL:
+Make Supabase tables match the backend code so users and quiz results actually save.
+After this fix, public.users and public.quiz_results should contain Julia after login/sync.

@@ -1,0 +1,213 @@
+We are refining the Entrepreneur DNA web app. Please implement the following improvements across the application.
+
+Focus on:
+
+* fixing functional issues
+* improving UX
+* improving conversion
+* ensuring mobile responsiveness
+
+Do NOT change the overall design style.
+
+Maintain the existing black + gold premium design.
+
+⸻
+
+1 FIX WAITLIST BUTTON (CRITICAL BUG)
+
+The button:
+
+“Join the Empire Waitlist”
+
+at the bottom of the Empire Journey page is currently not clickable.
+
+Please fix this.
+
+Expected behavior
+
+When the button is clicked:
+
+Open a waitlist capture form.
+
+Fields required:
+
+Name
+Email
+DNA Type (auto-filled from user result)
+
+Example:
+
+Name: Adriana
+Email: adriana@email.com
+DNA Type: Freedom Strategist
+
+After submission
+
+Display confirmation message:
+
+“You are now on the Empire Waitlist.”
+
+Optional enhancement:
+
+Display position in waitlist:
+
+“You are #42 on the Empire Waitlist.”
+
+Store submissions in database.
+
+⸻
+
+2 ADD HELPER TEXT UNDER USER INPUT QUESTIONS
+
+On the page:
+
+“Discover the Assets You Already Carry”
+
+Add small helper text under each field to guide users.
+
+Example:
+
+Field 1
+
+Current:
+
+What comes naturally to you?
+
+Add helper text:
+
+“Skills, talents, or abilities that feel easy for you.”
+
+⸻
+
+Field 2
+
+What do people ask you for help with?
+
+Helper text:
+
+“Problems others naturally come to you for.”
+
+⸻
+
+Field 3
+
+What have you personally overcome?
+
+Helper text:
+
+“Challenges or life experiences that shaped you.”
+
+⸻
+
+Field 4
+
+What topics energize you?
+
+Helper text:
+
+“Subjects you could talk about or learn about for hours.”
+
+⸻
+
+3 UPDATE COPY ON EMPIRE ALIGNMENT PAGE
+
+On the page:
+
+Your Empire Alignment
+
+Change description under Affiliate Empire.
+
+Current:
+
+“Earn commissions by recommending products you love through content, email, and social platforms.”
+
+Replace with:
+
+“Build recurring income by recommending products you trust through content, email, and social platforms.”
+
+⸻
+
+Also add text under Highest Compatibility:
+
+“Best starting model for your DNA.”
+
+⸻
+
+4 IMPROVE COPY ON FOUNDATION PAGE
+
+Page:
+
+Laying the Foundation of Your Online Empire
+
+Add sentence at end of paragraph:
+
+“This is where your empire journey begins.”
+
+⸻
+
+5 IMPROVE TRANSFORMATION PAGE TITLE
+
+Current title:
+
+“Define the Transformation You Will Build”
+
+Change to:
+
+“Define the Transformation You Are Here to Create”
+
+⸻
+
+6 ADD MOMENTUM STATEMENT ON EMPIRE PATH PAGE
+
+Under this text:
+
+“You are not locked into only this path…”
+
+Add sentence:
+
+“This is where your momentum will start fastest.”
+
+⸻
+
+7 FIX RESPONSIVE TEXT BEHAVIOR
+
+Ensure all text containers are responsive and do not overflow on mobile.
+
+Apply:
+
+white-space: normal
+word-wrap: break-word
+max-width: 100%
+
+Ensure text wraps correctly on:
+
+Desktop
+Tablet
+Mobile
+
+⸻
+
+8 IMPROVE SHARE TEXT FOR VIRALITY
+
+When users share their result, the default share text should be:
+
+“I just discovered my Entrepreneur DNA: Freedom Strategist. What’s yours?”
+
+Include link to the assessment.
+
+⸻
+
+9 MAINTAIN PREMIUM DESIGN
+
+Keep:
+
+Dark background
+Gold accents
+Minimal layout
+Premium typography
+
+Do not change branding.
+
+⸻
+
+Confirm once all updates are implemented.

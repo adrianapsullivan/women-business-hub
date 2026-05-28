@@ -1,0 +1,222 @@
+We are refining the onboarding and result flow of the Women Business Empires DNA App. The system is functional but several logical and messaging issues need to be corrected.
+
+Please implement the following improvements carefully without breaking the existing routing structure.
+
+⸻
+
+1 Fix Result Page Messaging
+
+On the Reveal page (DNA result page) remove any language suggesting statistical claims such as percentages.
+
+Remove lines like:
+
+“Only 14% of women have this Entrepreneur DNA”
+
+Replace with the following messaging structure:
+
+Your Entrepreneur DNA: {DNA_NAME}
+
+Women with this DNA thrive when they build businesses aligned with their natural strategic strengths.
+
+Most women try to build businesses that don’t match their Entrepreneur DNA.
+
+That is why so many struggle.
+
+When your strategy aligns with your DNA, everything begins to work differently.
+
+Ensure the DNA name is dynamically inserted.
+
+⸻
+
+2 Improve Pre Login Teaser Experience
+
+Currently the app reveals too little before asking users to log in.
+
+Adjust the flow so users can see a meaningful preview of their DNA result before login.
+
+Reveal page should show:
+
+DNA name
+Short identity explanation
+Strength summary
+Primary empire path
+
+Example layout:
+
+Section 1
+DNA Identity
+
+Section 2
+What this means for you
+
+Section 3
+Your strongest empire model
+
+Then show a section titled:
+
+Continue Your Entrepreneur DNA Report
+
+Below this section show a locked section with blur effect.
+
+Example locked sections:
+
+Your Business Compatibility Map
+Your Growth Pattern
+Your Empire Strategy Blueprint
+
+Under the locked section show a button:
+
+Unlock My Full DNA Report
+
+Clicking this button should redirect to the signup / login page.
+
+⸻
+
+3 Fix Navigation Logic After Quiz
+
+The correct flow should be:
+
+Welcome
+Intro
+Quiz
+Analyzing
+Reveal
+Report preview
+Login / signup
+Full report
+
+Currently some flows skip Intro or redirect incorrectly.
+
+Please verify and enforce the following routing rules:
+
+Welcome page → Discover button → Intro page
+
+Intro page → Begin DNA Analysis → Quiz page
+
+Quiz completion → Analyzing page
+
+Analyzing page → Reveal page
+
+Reveal page → Report preview
+
+Report preview → Login / Signup
+
+After login → Continue where user left off
+
+⸻
+
+4 Fix “Already Have an Account” Button
+
+Ensure that the link:
+
+Already have an account? Sign in
+
+Always opens the signup page in signin mode.
+
+Correct behavior:
+
+navigate(”/signup?mode=signin”)
+
+The system should never open the create account form first when the user selects sign in.
+
+⸻
+
+5 Ensure Returning Users Resume Journey
+
+Returning users should resume their progress rather than restarting.
+
+Logic should check localStorage keys:
+
+wbe_user
+wbe_quiz_result
+wbe_foundation_progress
+
+Behavior should be:
+
+If no user → Welcome page
+
+If quiz completed but user not logged in → Reveal preview page
+
+If logged in but no foundation progress → Foundation page
+
+If foundation progress exists → Premium page
+
+⸻
+
+6 Improve Viral Share Section
+
+Add a share block on the Reveal page after the identity explanation.
+
+Section title:
+
+Share Your Entrepreneur DNA
+
+Text:
+
+Know another woman who is ready to build something of her own?
+
+Send her the Entrepreneur DNA assessment.
+
+Add share buttons:
+
+Copy link
+Share to Facebook
+Share to Instagram
+Share to TikTok
+
+Ensure the share message contains:
+
+I just discovered my Entrepreneur DNA.
+
+Take the test and discover yours.
+
+Include the app link.
+
+⸻
+
+7 Improve Identity Presentation
+
+The DNA identity should visually appear as a badge.
+
+Structure:
+
+Entrepreneur DNA
+
+DNA Name (large headline)
+
+Short identity description
+
+Example:
+
+Freedom Strategist
+
+You are designed to build freedom based assets rather than traditional career structures.
+
+Ensure the identity section is visually prominent.
+
+⸻
+
+8 Prepare the System for Future Data Insights
+
+Add a placeholder comment in the code where future statistical data can be integrated.
+
+Example comment:
+
+Future feature: display real distribution data once enough assessment results exist.
+
+Do not display any percentages now.
+
+⸻
+
+Goal
+
+The app should feel like a premium strategic assessment rather than a simple quiz.
+
+Users should:
+
+Feel recognized
+Become curious about their strategy
+Want to unlock their full report
+Share the assessment with other women
+
+Do not break any existing routes or components while implementing these changes.

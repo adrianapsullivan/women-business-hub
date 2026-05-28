@@ -1,0 +1,139 @@
+IMPORTANT: Do NOT modify existing scoring logic, identity logic, or compatibility logic.
+
+Do NOT refactor routing.
+
+The app is currently a single-page application.
+
+We are adding a new view state called:
+
+foundationPhase1
+
+Add this new view to the existing view/state management system, similar to how test, results, and compatibility views are handled.
+
+Do not restructure the app.
+
+Do not install new routing libraries.
+
+Do not convert to multi-route architecture.
+
+-----------------------------------------------------
+
+1) Add a new view called "foundationPhase1".
+
+2) When the user clicks the button "Unlock My Empire Journey", instead of stopping there, change the current view state to foundationPhase1.
+
+3) Build a 5-step wizard inside foundationPhase1.
+
+4) Store all input data in localStorage under the key:
+
+empireFoundationData
+
+5) Do not connect to backend yet.
+
+-----------------------------------------------------
+
+STRUCTURE OF FOUNDATION PHASE 1
+
+STEP 1 — Identity Reinforcement (No input fields)
+
+Title:
+Laying the Foundation of Your Online Empire
+
+Text:
+"You are an Empire Builder.
+
+Your DNA reveals how you are naturally wired to build.
+You are not here to copy others.
+You are here to build in alignment.
+
+Clarity creates momentum.
+Today, you lay your foundation."
+
+Button:
+Continue
+
+-----------------------------------------------------
+
+STEP 2 — Asset Extraction
+
+Title:
+Discover the Assets You Already Carry
+
+Display guidance text explaining they already have strengths and experiences.
+
+Required text fields:
+
+- What comes naturally to you?
+- What do people ask you for help with?
+- What have you personally overcome?
+- What topics energize you?
+
+All fields required before proceeding.
+
+Button:
+Save & Continue
+
+-----------------------------------------------------
+
+STEP 3 — Core Transformation Design
+
+Title:
+Define the Transformation You Will Build
+
+Display guidance text helping them imagine their ideal woman and the result they help her achieve.
+
+Required fields:
+
+- Who do you want to help?
+- What specific result do you help them achieve?
+- Why does this transformation matter deeply to them?
+- Why are you uniquely positioned to guide them?
+
+All required before proceeding.
+
+Button:
+Save & Continue
+
+-----------------------------------------------------
+
+STEP 4 — Aligned Business Path
+
+Title:
+Your Primary Online Empire Path
+
+Display:
+
+"Based on your DNA results, your strongest aligned path is:"
+
+Auto-fill their highest compatibility category from previous results.
+
+Button:
+I Commit to This Direction
+
+-----------------------------------------------------
+
+STEP 5 — Commitment
+
+Title:
+Commit to Building
+
+Display:
+
+"An empire is not built by thinking.
+It is built by deciding."
+
+Add required checkbox:
+
+"I commit to building my online empire from alignment."
+
+Button:
+Complete Phase 1
+
+-----------------------------------------------------
+
+After completion, show a simple completion message:
+
+"Phase 1 Complete. Your Foundation Is Set."
+
+Do not build paywall yet.
+Do not change existing flow except for adding this new view.

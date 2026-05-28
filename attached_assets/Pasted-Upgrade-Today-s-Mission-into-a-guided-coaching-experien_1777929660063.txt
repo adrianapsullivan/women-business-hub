@@ -1,0 +1,153 @@
+Upgrade Today’s Mission into a guided coaching experience and improve Weekly Goals clarity.
+
+Do not change overall layout structure.
+Do not change authentication, routing, or Supabase logic.
+
+---
+
+PART 1 — TODAY’S MISSION UPGRADE (Creator Path only)
+
+Keep the existing card design, but enhance the content inside it.
+
+For each daily mission, add 3 layers:
+
+1. Identity Shift (short, bold sentence at the top)
+2. What Actually Matters (short teaching insight)
+3. Execution (clear action step)
+
+Structure inside the card:
+
+- Title (existing)
+- Identity Shift (NEW, small bold text, white)
+- What Actually Matters (NEW, secondary text #A0A0A0)
+- Execution (existing action text, slightly emphasized)
+- Keep “Mark Complete” button behavior exactly the same
+
+---
+
+Use this content for Creator Path (Days 1–7):
+
+DAY 1 — WRITE YOUR BRAND STORY  
+Identity Shift:  
+“You are not starting… you are revealing who you already are.”  
+
+What Actually Matters:  
+“Clarity comes from simplifying your story, not overthinking it. Your story only needs three parts: where you were, what changed, and where you are going.”  
+
+Execution:  
+“I used to __. Then I realized __. Now I’m building __.”
+
+---
+
+DAY 2 — TEACH WHAT YOU KNOW  
+Identity Shift:  
+“You don’t need more knowledge… you need to use what you already know.”  
+
+What Actually Matters:  
+“People don’t follow experts… they follow clarity. If you can explain something simply, you already have authority.”  
+
+Execution:  
+Create one post: “3 things I wish I knew before __.”
+
+---
+
+DAY 3 — SAY SOMETHING REAL  
+Identity Shift:  
+“Connection beats perfection… every time.”  
+
+What Actually Matters:  
+“People trust honesty more than polish. Saying what others are afraid to say builds trust fast.”  
+
+Execution:  
+Post: “The truth is… I used to think __. Now I see __.”
+
+---
+
+DAY 4 — MULTIPLY YOUR CONTENT  
+Identity Shift:  
+“You don’t need more ideas… you need to reuse your ideas.”  
+
+What Actually Matters:  
+“One idea can become multiple pieces of content. Smart creators multiply, they don’t restart.”  
+
+Execution:  
+Take one past post and rewrite it in a different format.
+
+---
+
+DAY 5 — STUDY WHAT WORKS  
+Identity Shift:  
+“You don’t guess… you observe.”  
+
+What Actually Matters:  
+“Success leaves patterns. When something performs well, there is always a reason.”  
+
+Execution:  
+Find 3 posts in your niche and write why they worked.
+
+---
+
+DAY 6 — FIND YOUR VOICE  
+Identity Shift:  
+“You are not here to sound like everyone… you are here to sound like you.”  
+
+What Actually Matters:  
+“Your voice is how you naturally explain things. Not perfect… just real.”  
+
+Execution:  
+Explain something you know in 3 sentences like you’re talking to a friend.
+
+---
+
+DAY 7 — REVIEW YOUR WEEK  
+Identity Shift:  
+“You are already building momentum.”  
+
+What Actually Matters:  
+“Growth happens when you reflect, not just when you act.”  
+
+Execution:  
+Answer: What felt easy? What worked? What felt like you?
+
+---
+
+Do not add new pages. Only enhance existing mission card.
+
+---
+
+PART 2 — WEEKLY GOALS CLARITY FIX
+
+Do not change checklist functionality.
+
+1. Change title:
+“Weekly Empire Goals”
+→
+“Your Weekly Empire Goals”
+
+2. Add this line under the title:
+
+“This week, your focus is simple…”
+
+3. Add this helper line below it:
+
+“Each check is proof you are building your empire.”
+
+4. Keep checklist items the same.
+
+5. Slightly reduce visual weight of this section:
+- text color slightly lighter (#A0A0A0)
+- checkmarks remain gold
+
+---
+
+Do not modify:
+- mission completion logic
+- streak logic
+- score logic
+- Supabase structure
+- activation system
+
+---
+
+Goal:
+Transform Today’s Mission into a daily coaching experience while making Weekly Goals feel like a supportive rhythm, not pressure.

@@ -1,0 +1,111 @@
+}
+Fix the authentication and email confirmation system completely.
+
+Do not add new features.
+Do not redesign UI.
+Do not add shortcuts or bypass logic.
+
+We need a clean, correct Supabase auth flow.
+
+---
+
+1. REMOVE ALL BYPASS LOGIC
+
+- Remove any link or button that allows the user to bypass email confirmation
+- Specifically remove any “I already confirmed” link or manual navigation to the unlocked report
+- The user must ONLY unlock access through Supabase email confirmation
+
+---
+
+2. FIX SIGNUP FLOW
+
+When user clicks “Unlock My Full DNA Report”:
+
+- Show a clean auth screen with:
+  - Sign up
+  - Log in (existing users)
+
+Do not send email before user submits form.
+
+---
+
+3. AFTER SIGNUP
+
+After successful signup:
+
+- Show a static screen:
+  “Check your email to continue”
+
+- Do NOT navigate forward
+- Do NOT unlock anything yet
+- Do NOT auto-redirect
+
+---
+
+4. EMAIL CONFIRMATION (CRITICAL)
+
+- Use Supabase email confirmation properly
+- Ensure redirect URL is correctly configured
+- After user clicks email link and returns:
+
+Check:
+user.email_confirmed_at
+
+IF confirmed:
+→ unlock full DNA report
+
+IF not:
+→ keep user blocked
+
+---
+
+5. FIX MULTIPLE EMAIL TRIGGERS
+
+- Ensure signup only triggers ONE email
+- Prevent multiple calls on re-render
+- Prevent double submission
+
+---
+
+6. FIX EXISTING USER LOGIN
+
+If user already has an account:
+
+- Allow login with email + password
+- After login:
+  - Check if email is confirmed
+
+IF confirmed:
+→ unlock report
+
+IF not:
+→ show “Check your email” screen again
+
+---
+
+7. FIX SESSION HANDLING
+
+- Persist Supabase session correctly
+- On page load:
+  - check if user exists
+  - check if email is confirmed
+
+Do not reset state incorrectly
+
+---
+
+8. TEST CONDITIONS
+
+Verify:
+
+1. New user cannot access report before confirming email
+2. Email is sent once after signup
+3. User must click email link to proceed
+4. No bypass links exist
+5. Existing confirmed users can log in normally
+6. No rate limit issues from repeated triggers
+
+---
+
+This is a logic fix only.
+Do not change design beyond what is required

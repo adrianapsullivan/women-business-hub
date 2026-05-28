@@ -1,0 +1,181 @@
+[12:47 PM, 3/17/2026] Adriana Sullivan: We need to add a login gate to the root of the app.
+
+Current issue:
+Returning users automatically get routed to /hub or /premium without seeing a login page.
+
+Desired behavior:
+
+When the app loads at /:
+
+1. If there is NO user in localStorage:
+   route to /intro (new user funnel)
+
+2. If a user exists in localStorage:
+   route to /login
+
+After login:
+
+Check user progress and redirect accordingly:
+
+quiz not started → /quiz  
+quiz completed → /reveal  
+report unlocked → /report  
+premium user → /premium
+
+Please implement this routing logic in welcome.tsx or the root router so returning users always see the login screen first.
+[1:03 PM, 3/17/2026] Adriana Sullivan: The authentication and routing flow for the Women Business Hub app is now working correctly.
+
+Current funnel:
+
+Intro → Quiz → Reveal → Signup/Login → Report → Premium/Waitlist
+
+Next we need to improve the product experience and conversion flow.
+
+Please implement the following upgrades carefully without breaking the current routing system.
+
+---------------------------------------------------
+
+1. REPORT ACCESS GATE (Unlock System)
+
+Currently users can see the full report.
+
+We want to increase signup conversion by locking most of the report until the user creates an account.
+
+Behavior:
+
+If user is NOT authenticated:
+
+* Show the top section of the report:
+  - DNA Type
+  - Short description
+
+* Blur or hide the rest of the report sections:
+  - Strengths
+  - Growth Path
+  - Empire Blueprint
+  - Strategy Recommendations
+
+* Display a call-to-action card:
+
+  "Unlock Your Full Entrepreneur DNA Profile"
+
+  Text:
+  Create your free account to see your strengths, growth path, and personalized business blueprint.
+
+Button:
+  Unlock My Full DNA Report
+
+Button should redirect to:
+  /signup?redirect=/report
+
+If the user is authenticated:
+Show the full report normally.
+
+---------------------------------------------------
+
+2. SAVE QUIZ RESULTS TO USER
+
+When a user finishes the quiz, store the results so they persist between sessions.
+
+Save the following fields:
+
+user_id
+dna_type
+answers
+score
+quiz_completed (boolean)
+report_unlocked (boolean)
+
+When the quiz finishes:
+
+quiz_completed = true
+
+When the user unlocks the report:
+
+report_unlocked = true
+
+Ensure returning users can still see their DNA result.
+
+---------------------------------------------------
+
+3. RETURNING USER RESUME LOGIC
+
+When a returning user logs in, the system should redirect them to the correct step in the funnel based on their progress.
+
+Logic:
+
+If quiz_completed == false
+→ redirect to /quiz
+
+If quiz_completed == true AND report_unlocked == false
+→ redirect to /reveal
+
+If report_unlocked == true
+→ redirect to /report
+
+If premium user
+→ redirect to /premium
+
+---------------------------------------------------
+
+4. REPORT → PREMIUM FLOW
+
+At the bottom of the report page, add a section introducing the next step.
+
+Section title:
+"Your Empire Journey Starts Now"
+
+Description:
+Now that you understand your Entrepreneur DNA, the next step is activating it with the right systems, strategy, and support.
+
+Display a feature list:
+
+* Your Daily Empire Roadmap
+* DNA-Matched Business Blueprint
+* Weekly Empire-Building Sessions
+* Private Empire Collective Community
+
+Add a CTA button:
+
+Start My Empire Journey
+
+This button should route to:
+ /premium
+
+---------------------------------------------------
+
+5. SECURITY IMPROVEMENT
+
+Prevent unauthorized access to the report page.
+
+If a user tries to visit:
+
+/report
+
+without authentication:
+
+Redirect them to:
+
+/signup?redirect=/report
+
+---------------------------------------------------
+
+6. CLEAN USER EXPERIENCE
+
+Make sure:
+
+* Signup redirects correctly to /report when unlocking the report
+* Returning users go to their correct funnel step
+* Quiz progress and DNA results persist across sessions
+
+---------------------------------------------------
+
+Please implement these improvements across:
+
+report.tsx
+quiz.tsx
+signup.tsx
+welcome.tsx
+router logic
+
+without breaking the existing working funnel.

@@ -1,0 +1,18 @@
+Before making any changes, please audit the entire codebase and tell me what you find first. Do not make any fixes until I approve your plan.
+
+PRIORITY 1 - AUTHENTICATION BUGS:
+
+The app authentication and flow have multiple critical bugs. Please fix all of these:
+	1.	When someone tries to create an account with an email that already exists, the system must recognize it and prompt them to log in instead of creating a duplicate account.
+	2.	The login flow kicks existing users back to the landing page instead of keeping them logged in and resuming where they left off.
+	3.	The commitment questions page and checkmark page are being skipped for some users — every user must complete these steps in order before reaching ‘Activate My Empire Path’.
+	4.	The ‘Apply for Membership’ button must correctly redirect to the ClickFunnels URL.
+	5.	Fix session and progress tracking so every user follows the complete flow in order, regardless of whether they are new, returning, or have a cached session.
+Please audit the entire authentication flow and user progress tracking before making fixes.
+PRIORITY 2 - EMPIRE BLUEPRINT PDF:
+After the user completes the 4 transformation questions (Who do you want to help, What specific result do you help them achieve, Why does this transformation matter deeply to them, Why are you uniquely positioned to guide them), generate a downloadable PDF called ‘My Empire Blueprint’ that includes:
+	∙	Their DNA Identity at the top (e.g. Strategic Builder)
+	∙	Their Empire Archetype — map their DNA identity to one of three types: The Builder (Strategic Builder, Action Taker, Legacy Builder), The Creator (Visionary Leader, Knowledge Authority, Freedom Strategist), The Connector (Community Builder, Influence Creator)
+	∙	Their 4 transformation answers
+	∙	A closing message that says: ‘Return to this whenever you feel stuck, lose momentum, or need to reconnect with your WHY. This is your north star.’
+Add a ‘Download My Empire Blueprint’ button on the page immediately after they save their answers.”

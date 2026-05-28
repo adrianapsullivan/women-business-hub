@@ -1,0 +1,128 @@
+Implement user recognition, login, and simple progress tracking using Supabase.
+
+GOAL:
+The app must remember users, prevent duplicate accounts, and ensure they continue their journey instead of restarting.
+
+---
+
+1. CREATE USER PROGRESS TABLE (if not exists)
+
+Table name: user_progress
+
+Columns:
+- user_id (uuid, primary key, references auth.users)
+- quiz_completed (boolean, default false)
+- report_unlocked (boolean, default false)
+- updated_at (timestamp)
+
+---
+
+2. CREATE PROGRESS RECORD ON SIGNUP
+
+When a new user signs up:
+
+- Create a row in user_progress
+- Set:
+  quiz_completed = false
+  report_unlocked = false
+
+This ensures every user is tracked from the beginning.
+
+---
+
+3. SAVE QUIZ COMPLETION
+
+When user reaches the FINAL step of the quiz:
+
+- Set:
+  quiz_completed = true
+
+IMPORTANT:
+Completion means reaching the end, not answering perfectly.
+
+---
+
+4. SAVE REPORT UNLOCK
+
+When user confirms email and unlocks full report:
+
+- Set:
+  report_unlocked = true
+
+---
+
+5. PREVENT DUPLICATE ACCOUNTS
+
+When user enters email + password:
+
+FIRST:
+- Try signInWithPassword
+
+IF login succeeds:
+→ proceed normally
+
+IF login fails because user does not exist:
+→ allow signUp
+
+IF email already exists:
+→ DO NOT create a new account
+→ show message:
+
+"Looks like you already started… log in to continue"
+
+---
+
+6. LOGIN REDIRECTION (CRITICAL)
+
+After successful login:
+
+Fetch user_progress using user_id
+
+Then redirect:
+
+IF no record exists:
+→ go to /intro
+
+IF quiz_completed = false:
+→ go to /quiz
+
+IF quiz_completed = true AND report_unlocked = false:
+→ go to /report (locked or partial view)
+
+IF report_unlocked = true:
+→ go to /premium
+
+---
+
+7. APP LOAD BEHAVIOR
+
+On app load:
+
+IF user is logged in:
+→ fetch progress and redirect using same rules above
+
+IF not logged in:
+→ show intro page
+
+---
+
+8. EMAIL CONFIRMATION (KEEP STRICT)
+
+- User must confirm email via Supabase
+- Do NOT allow bypass
+- Do NOT unlock report until confirmed
+
+---
+
+9. UX RULES
+
+- Returning users must never restart automatically
+- Users should feel recognized and remembered
+- Keep logic simple and reliable
+
+---
+
+IMPORTANT:
+Do not redesign UI.
+Do not change styling.
+Only improve authentication, logic, and routing behavior.

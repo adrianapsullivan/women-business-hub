@@ -1,0 +1,80 @@
+Do not modify scoring weights, question logic, compatibility baselines, routing, layout structure, styling system, or existing components unless explicitly stated below.
+
+Apply ONLY the following updates:
+
+UPDATE IDENTITY DISPLAY NAMES (DISPLAY ONLY)
+
+Keep internal scoring keys the same.
+Only change the visible identity names as follows:
+
+architect → Strategic Builder
+visionary → Visionary Leader
+catalyst → Influence Creator
+community → Community Builder
+guardian → Knowledge Authority
+momentum → Action Taker
+freedom → Freedom Strategist
+legacy → Legacy Builder
+
+Do not modify scoring keys or weight accumulation.
+
+ADD PRIMARY + SECONDARY IDENTITY LOGIC
+
+Replace the current winner-takes-all identity assignment with:
+
+• Sort scores in descending order.
+• Capture top two keys and scores.
+• Compute dominanceGap = topScore - secondScore.
+
+If dominanceGap >= 10:
+Assign only primaryIdentity = topKey.
+
+If dominanceGap < 10:
+Assign:
+primaryIdentity = topKey
+secondaryIdentity = secondKey.
+
+Return secondaryIdentity only when dominanceGap < 10.
+
+Compatibility scoring must remain based ONLY on primaryIdentity.
+
+Do not modify compatibility baselines.
+Do not modify jitter logic.
+
+UPDATE RESULT PAGE DISPLAY (OPTION A LAYOUT)
+
+When secondaryIdentity exists, display:
+
+Primary Identity (large bold heading)
+
+Below it, smaller text:
+
+With strong traits of:
+[Secondary Identity Name]
+
+If no secondaryIdentity exists, display only the primary identity.
+
+Do not redesign layout.
+Do not change spacing system.
+Do not modify styling beyond adding the secondary line.
+
+ADD WBE LOGO PLACEMENT
+
+Assume logo file is provided.
+
+Add the circular WBE logo:
+
+• Centered at the top of the landing page
+• Positioned above the main headline
+• Width approximately 90px
+• Maintain existing layout
+• Do not restructure header
+• Do not alter typography
+
+Also add the logo centered at the top of the result page above the identity title.
+
+No animations.
+No layout redesign.
+No global styling refactor.
+
+Confirm changes were applied without modifying scoring weights, question structure, compatibility logic, or overall layout.

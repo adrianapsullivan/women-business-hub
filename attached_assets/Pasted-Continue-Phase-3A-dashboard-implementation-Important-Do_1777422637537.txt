@@ -1,0 +1,80 @@
+Continue Phase 3A dashboard implementation.
+
+Important:
+Do not change authentication, signup, login, quiz, report, compatibility, or foundation logic.
+Do not connect new dashboard data to Supabase yet.
+Use localStorage only.
+Keep the existing dashboard style.
+
+Fix 1:
+Replace every plain text “WBE” used as a logo/header inside the dashboard and path selection screen with the existing original WBE logo asset already used elsewhere in the app.
+Do not create a new logo.
+Use the existing logo file from the app assets.
+Make it visible, premium, and properly sized on mobile.
+
+Fix 2:
+Complete the missing dashboard sections below the Empire Status and Empire Path card.
+
+Add these sections in this order:
+
+1. Today’s Mission
+Show one mission based on selected Empire Path.
+
+Builder:
+Title: Define Your Core Offer
+Description: Write your one core offer in one sentence. Clarity is your first system. Builders do not move without a clear foundation.
+
+Creator:
+Title: Write Your Brand Story
+Description: Write your brand story in three sentences. Your voice is your empire. People follow creators who know who they are.
+
+Connector:
+Title: Find Your Community
+Description: Identify three communities where your ideal client already spends time. Connectors go where the people are.
+
+Add a gold button:
+Mark Complete
+
+When clicked:
+Increase localStorage empire score by 10.
+Mark today’s mission complete for today only.
+Button should change to completed state after clicked.
+
+2. Weekly Empire Goals
+Show checklist:
+Post 3 times this week
+Complete today’s mission every day
+Engage with 20 accounts in your niche
+Review your DNA report once this week
+Write down one win before the week ends
+
+3. Empire Mindset
+Show this statement:
+It’s already mine. I just need to go claim it.
+
+4. Empire Journey Map
+Show four phases:
+Foundation: Active
+Momentum: Locked
+Visibility: Locked
+Empire: Locked
+
+5. DNA Report Access
+Card title: Your Entrepreneur DNA
+Show user DNA type if available from localStorage.
+Gold outline button:
+View My Full DNA Report
+Route to /report
+
+6. Empire Mastermind Gateway
+Locked aspirational card.
+Title: Empire Mastermind
+Description: Complete your Foundation and Momentum phases to unlock the mastermind community.
+Disabled button:
+Unlocks at Day 60
+
+Final checks:
+Make sure /dashboard loads fully.
+Make sure the dashboard is mobile responsive.
+Make sure clicking “I’m Ready. Let’s Build.” reveals all dashboard sections.
+Make sure the original WBE logo appears instead of plain text WBE.

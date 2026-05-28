@@ -1,0 +1,206 @@
+We need to fix and standardize the authentication system for the WBE app for long-term paid membership use.
+
+Do not change:
+- Dashboard layout
+- Quiz questions
+- DNA report design
+- Funnel links
+- UI styling
+
+Only fix authentication and user creation flow.
+
+---
+
+GOAL
+
+Create ONE consistent authentication system using:
+
+Email + Password only
+
+No magic links for normal login.
+No passwordless login.
+No mixed authentication methods.
+
+---
+
+CRITICAL FLOW (THIS IS THE FOUNDATION)
+
+The FIRST account creation happens when the user finishes the DNA quiz and enters:
+
+- First name
+- Email
+- Password
+
+to unlock the full DNA result.
+
+This is where the account must be created in Supabase.
+
+---
+
+STEP 1: SIGNUP (DNA RESULT UNLOCK STEP)
+
+When user submits first name, email, and password:
+
+Use:
+
+supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    data: {
+      first_name: firstName,
+      dna_type: dnaType
+    }
+  }
+})
+
+Also store:
+- quiz answers
+- dna result
+
+linked to this user ID.
+
+After successful signup:
+
+DO NOT log the user in automatically.
+
+Show this message:
+
+"Check your email to confirm your access. Then return here to sign in."
+
+---
+
+STEP 2: EMAIL CONFIRMATION
+
+User clicks confirmation link from Supabase email.
+
+After confirmation:
+They return to the app manually.
+
+---
+
+STEP 3: SIGN IN
+
+Sign in must ONLY use:
+
+supabase.auth.signInWithPassword({
+  email,
+  password
+})
+
+On success:
+→ redirect to /dashboard
+
+On error:
+Show:
+
+"We couldn’t sign you in. Check your email and password, or reset your password below."
+
+---
+
+IMPORTANT: REMOVE THIS COMPLETELY
+
+- supabase.auth.signInWithOtp
+- Magic link login for normal users
+- Any passwordless authentication
+
+We only use email + password.
+
+---
+
+STEP 4: FORGOT PASSWORD
+
+On sign in page add:
+
+"Forgot your password?"
+
+When clicked:
+
+supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: ${window.location.origin}/reset-password
+})
+
+After request show:
+
+"Check your email to reset your password."
+
+---
+
+STEP 5: RESET PASSWORD PAGE
+
+Create route:
+
+/reset-password
+
+User enters:
+- New password
+- Confirm password
+
+Then call:
+
+supabase.auth.updateUser({
+  password: newPassword
+})
+
+After success show:
+
+"Your password has been updated. You can now sign in."
+
+Button:
+"Go to Sign In"
+
+---
+
+STEP 6: EXISTING USER HANDLING
+
+If user tries to sign up with an existing email:
+
+Show:
+
+"Looks like you already started. Please sign in or reset your password."
+
+Do NOT silently fail.
+
+---
+
+STEP 7: DASHBOARD CONNECTION
+
+After login:
+
+- Pull user first_name from Supabase
+- Display it instead of "Queen"
+- Pull dna_type and show correct path (Builder, Creator, Connector mapping)
+
+---
+
+STEP 8: FINAL TEST REQUIREMENTS
+
+Confirm all of these work:
+
+1. New user completes quiz
+2. Enters name, email, password
+3. Account is created
+4. Email confirmation is required
+5. After confirmation, user signs in with password
+6. Login works correctly
+7. User is redirected to /dashboard
+8. Forgot password works
+9. Reset password works
+10. No magic link is used anywhere in normal login flow
+
+---
+
+IMPORTANT NOTE
+
+This must prevent mixed authentication states.
+
+Every user must have:
+- Email
+- Password
+- Confirmed account
+
+No user should exist without a password.
+
+---
+
+Do not modify anything outside authentication and user flow.

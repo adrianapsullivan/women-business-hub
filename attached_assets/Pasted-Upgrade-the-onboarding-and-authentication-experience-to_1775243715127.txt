@@ -1,0 +1,175 @@
+Upgrade the onboarding and authentication experience to support both new and returning users in a clean, premium, app-like flow.
+
+GOAL:
+The app must feel intelligent, remember users, and allow them to continue their journey seamlessly without restarting.
+
+---
+
+1. INTRO PAGE (NEW + RETURNING USERS)
+
+Keep the current intro page ("Reveal Your Entrepreneur DNA").
+
+Enhance it with a subtle login option:
+
+Text:
+"Returning? Log in to continue your journey"
+
+Placement:
+- Top right corner of the screen
+- Small, minimal, premium style
+- Do not compete with main CTA
+
+Behavior:
+- Clicking opens login screen or modal
+
+---
+
+2. LOGIN FLOW (RETURNING USERS)
+
+When user logs in using Supabase signInWithPassword:
+
+- Check if user exists
+- Retrieve their progress from database
+
+IF progress exists:
+→ Redirect user to their last saved step
+
+IF user completed Phase 1:
+→ Redirect to results/report page
+
+IF no progress:
+→ Start from beginning
+
+IMPORTANT:
+Do NOT create a new account if user already exists.
+
+---
+
+3. SIGNUP FLOW (NEW USERS)
+
+When a new user signs up:
+
+- Use Supabase signUp
+- After signup, show "Check your email" screen
+- DO NOT allow access to results until email is confirmed
+
+Remove any manual bypass links such as:
+"I already confirmed"
+
+Users MUST confirm via email link.
+
+---
+
+4. EMAIL CONFIRMATION BEHAVIOR
+
+After user clicks email link:
+
+- Supabase confirms the user
+- App must detect active session
+- Redirect user into the app
+
+Then:
+→ Resume their journey OR
+→ Show full report if completed
+
+---
+
+5. USER PROGRESS SYSTEM (CRITICAL)
+
+Create or use a table:
+
+user_progress
+
+Fields:
+- user_id
+- current_step (number)
+- answers (JSON)
+- dna_result (text)
+- phase_completed (boolean)
+
+---
+
+6. SAVE PROGRESS
+
+After every step (Continue / Save & Continue):
+
+- Save current_step
+- Save answers
+
+Do NOT lose progress on refresh or logout
+
+---
+
+7. RESTORE PROGRESS
+
+On app load:
+
+IF user session exists:
+→ Fetch user_progress
+→ Redirect to current_step
+
+IF phase_completed = true:
+→ Redirect to results page
+
+IF no session:
+→ Show intro page
+
+---
+
+8. DO NOT RESTART USERS
+
+Returning users should NEVER be forced to restart unless they choose "Start Over"
+
+---
+
+9. CLEAN AUTHENTICATION LOGIC
+
+When user enters email + password:
+
+- Try signInWithPassword FIRST
+
+IF login fails:
+→ THEN allow signUp
+
+Avoid duplicate accounts
+
+---
+
+10. REMOVE CONFUSING FLOWS
+
+Remove:
+- Any bypass links to skip email confirmation
+- Any auto-navigation that ignores authentication state
+
+The flow must be strict and intentional
+
+---
+
+11. EXPERIENCE GOAL
+
+The app must feel:
+
+- Personal
+- Continuous
+- Intelligent
+- Premium
+- Like it "remembers" the user
+
+NOT like a quiz or funnel
+
+---
+
+FINAL RESULT:
+
+New user:
+→ Starts from intro → signs up → confirms email → continues journey
+
+Returning user:
+→ Logs in → resumes exactly where they left off
+
+Completed user:
+→ Goes directly to results/dashboard
+
+---
+
+This is a core system upgrade. Execute carefully and ensure all flows work together.
