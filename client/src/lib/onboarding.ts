@@ -1,3 +1,5 @@
+import { authenticatedFetch } from "./authenticated-fetch";
+
 export type OnboardingStep =
   | "quiz"
   | "reveal"
@@ -76,11 +78,10 @@ export async function saveOnboardingStep(
 
     console.log("[onboarding] progress save started — step:", step, "userId:", userId);
 
-    await fetch("/api/onboarding/progress", {
+    await authenticatedFetch("/api/onboarding/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        userId,
         currentStep: step,
         completedSteps,
         dnaType,
@@ -104,7 +105,7 @@ export async function loadOnboardingProgress(
   userId: string,
 ): Promise<OnboardingProgress | null> {
   try {
-    const resp = await fetch(
+    const resp = await authenticatedFetch(
       `/api/onboarding/progress/${encodeURIComponent(userId)}`,
     );
     if (!resp.ok) return null;

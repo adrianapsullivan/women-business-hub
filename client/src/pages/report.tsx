@@ -22,27 +22,44 @@ import JourneyProgress from "@/components/journey-progress";
 import supabase from "@/lib/supabase";
 import { saveUserProgress } from "@/lib/progress";
 import { saveOnboardingStep } from "@/lib/onboarding";
+import {
+  LEGACY_RESULT_STORAGE_KEY,
+  V2_RESULT_STORAGE_KEY,
+  getPostReportRoute,
+  readActiveClientDnaResult,
+} from "@/lib/entrepreneur-dna-v2-activation";
+import {
+  toClientDnaDisplayResult,
+  type ClientDnaDisplayResult,
+  type ClientEntrepreneurDnaResult,
+} from "@/lib/entrepreneur-dna-result";
 
 type AuthState = "loading" | "guest" | "pending" | "unlocked";
 
 export default function Report() {
   const [, navigate] = useLocation();
   const [profile, setProfile] = useState<(typeof dnaProfiles)[DNAType] | null>(null);
+  const [clientResult, setClientResult] = useState<ClientEntrepreneurDnaResult | null>(null);
+  const [displayResult, setDisplayResult] = useState<ClientDnaDisplayResult | null>(null);
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [userEmail, setUserEmail] = useState("");
   // Guard: only call saveUserProgress once per mount, even if onAuthStateChange fires multiple times
   const progressSavedRef = useRef(false);
 
   useEffect(() => {
-    const resultStr = localStorage.getItem("wbe_result");
-    if (!resultStr) {
+    const result = readActiveClientDnaResult(
+      localStorage.getItem(V2_RESULT_STORAGE_KEY),
+      localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
+    );
+    if (!result) {
       navigate("/");
       return;
     }
-    const result = JSON.parse(resultStr);
-    const dnaType: DNAType = result.dnaType;
-    if (dnaProfiles[dnaType]) {
-      setProfile(dnaProfiles[dnaType]);
+    const display = toClientDnaDisplayResult(result);
+    setClientResult(result);
+    setDisplayResult(display);
+    if (dnaProfiles[display.primaryDnaType]) {
+      setProfile(dnaProfiles[display.primaryDnaType]);
     }
 
     const resolveAuth = async () => {
@@ -209,6 +226,17 @@ export default function Report() {
             <p className="text-white/40 text-xs tracking-widest uppercase">
               Entrepreneur DNA Identity
             </p>
+            {displayResult?.secondaryDnaType && (
+              <p className="text-white/55 text-sm">
+                With strong traits of {displayResult.secondaryDnaType}
+              </p>
+            )}
+            {displayResult?.resultVersion === "2.0-beta" &&
+              displayResult.profileClassification === "blended" && (
+                <p className="text-white/55 text-sm">
+                  Blended Entrepreneur DNA profile
+                </p>
+              )}
           </div>
 
           <div className="flex items-center gap-4 mt-2">
@@ -281,7 +309,13 @@ export default function Report() {
                 </div>
 
                 <Button
-                  onClick={() => navigate("/compatibility")}
+                  onClick={() =>
+                    navigate(
+                      clientResult
+                        ? getPostReportRoute(clientResult)
+                        : "/report",
+                    )
+                  }
                   data-testid="button-start-empire-journey"
                   className="w-full font-semibold text-base py-6 rounded-md tracking-wide text-black mt-2"
                   style={{

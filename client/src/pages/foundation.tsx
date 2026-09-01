@@ -8,6 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Download } from "lucide-react";
 import JourneyProgress from "@/components/journey-progress";
 import { generateBlueprintPDF } from "@/lib/blueprint-pdf";
+import {
+  LEGACY_RESULT_STORAGE_KEY,
+  V2_RESULT_STORAGE_KEY,
+  getSafeDnaRoute,
+  readActiveClientDnaResult,
+} from "@/lib/entrepreneur-dna-v2-activation";
+import { authenticatedFetch } from "@/lib/authenticated-fetch";
 
 const STORAGE_KEY = "empireFoundationData";
 
@@ -104,6 +111,18 @@ export default function Foundation() {
   const [step3Error, setStep3Error] = useState("");
 
   useEffect(() => {
+    const activeResult = readActiveClientDnaResult(
+      localStorage.getItem(V2_RESULT_STORAGE_KEY),
+      localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
+    );
+    if (
+      activeResult &&
+      getSafeDnaRoute("/foundation", activeResult) !== "/foundation"
+    ) {
+      navigate("/report");
+      return;
+    }
+
     const userStr = localStorage.getItem("wbe_user");
     if (!userStr) {
       navigate("/signup?mode=signin");
@@ -139,7 +158,7 @@ export default function Foundation() {
       try { applyProgress(JSON.parse(saved)); } catch { /* ignore */ }
     }
 
-    fetch(`/api/foundation/progress/${user.id}`)
+    authenticatedFetch(`/api/foundation/progress/${user.id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((progress) => {
         if (progress) applyProgress(progress);
@@ -174,9 +193,7 @@ export default function Foundation() {
   ) => {
     const userStr = localStorage.getItem("wbe_user");
     if (!userStr) return;
-    const user = JSON.parse(userStr) as { id: string };
     const payload = {
-      userId: user.id,
       step: nextStep,
       completed: extra?.completed ?? false,
       committed: extra?.committed ?? committed,
@@ -184,7 +201,7 @@ export default function Foundation() {
       assets: overrideAssets ?? assets,
       transformation: overrideTransformation ?? transformation,
     };
-    fetch("/api/foundation/progress", {
+    authenticatedFetch("/api/foundation/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

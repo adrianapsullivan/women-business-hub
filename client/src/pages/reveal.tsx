@@ -8,6 +8,15 @@ import { SiFacebook, SiInstagram, SiTiktok } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import JourneyProgress from "@/components/journey-progress";
 import { saveOnboardingStep } from "@/lib/onboarding";
+import {
+  LEGACY_RESULT_STORAGE_KEY,
+  V2_RESULT_STORAGE_KEY,
+  readActiveClientDnaResult,
+} from "@/lib/entrepreneur-dna-v2-activation";
+import {
+  toClientDnaDisplayResult,
+  type V2ClientDnaDisplayResult,
+} from "@/lib/entrepreneur-dna-result";
 
 export default function Reveal() {
   const [, navigate] = useLocation();
@@ -15,22 +24,30 @@ export default function Reveal() {
   const [stage, setStage] = useState(0);
   const [profile, setProfile] = useState<(typeof dnaProfiles)[DNAType] | null>(null);
   const [secondaryProfile, setSecondaryProfile] = useState<(typeof dnaProfiles)[DNAType] | null>(null);
+  const [v2Display, setV2Display] = useState<V2ClientDnaDisplayResult | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const resultStr = localStorage.getItem("wbe_result");
-    if (!resultStr) {
+    const result = readActiveClientDnaResult(
+      localStorage.getItem(V2_RESULT_STORAGE_KEY),
+      localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
+    );
+    if (!result) {
       navigate("/");
       return;
     }
-    const result = JSON.parse(resultStr);
-    const dnaType: DNAType = result.dnaType;
-    if (dnaProfiles[dnaType]) {
-      setProfile(dnaProfiles[dnaType]);
+    const display = toClientDnaDisplayResult(result);
+    if (dnaProfiles[display.primaryDnaType]) {
+      setProfile(dnaProfiles[display.primaryDnaType]);
     }
-    const secondaryDnaType: DNAType | undefined = result.secondaryDnaType;
-    if (secondaryDnaType && dnaProfiles[secondaryDnaType]) {
-      setSecondaryProfile(dnaProfiles[secondaryDnaType]);
+    if (
+      display.secondaryDnaType &&
+      dnaProfiles[display.secondaryDnaType]
+    ) {
+      setSecondaryProfile(dnaProfiles[display.secondaryDnaType]);
+    }
+    if (display.resultVersion === "2.0-beta") {
+      setV2Display(display);
     }
     saveOnboardingStep("reveal");
     const t1 = setTimeout(() => setStage(1), 500);
@@ -275,6 +292,11 @@ export default function Reveal() {
               <span className="text-white/70 font-medium">
                 {secondaryProfile.type}
               </span>
+            </p>
+          )}
+          {v2Display?.profileClassification === "blended" && (
+            <p className="text-white/45 text-sm mt-3">
+              Your result reflects a blended Entrepreneur DNA profile.
             </p>
           )}
         </div>

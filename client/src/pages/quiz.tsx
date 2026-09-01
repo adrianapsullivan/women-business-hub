@@ -1,20 +1,24 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { quizQuestions, scoreQuiz } from "@/lib/quiz-data";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { saveUserProgress } from "@/lib/progress";
 import { saveOnboardingStep } from "@/lib/onboarding";
-
-const PROGRESS_KEY = "wbe_quiz_progress";
+import {
+  ACTIVE_ENTREPRENEUR_DNA_V2_QUESTIONS,
+  V2_ANSWERS_STORAGE_KEY,
+  V2_PROGRESS_STORAGE_KEY,
+  V2_RESULT_STORAGE_KEY,
+  createEntrepreneurDnaV2Result,
+} from "@/lib/entrepreneur-dna-v2-activation";
+import type { DnaAnswerValue } from "@shared/entrepreneur-dna/types";
 
 function loadSavedProgress(): {
   currentQ: number;
-  answers: Record<number, string>;
+  answers: Record<number, DnaAnswerValue>;
 } | null {
   try {
-    const raw = localStorage.getItem(PROGRESS_KEY);
+    const raw = localStorage.getItem(V2_PROGRESS_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -26,62 +30,44 @@ export default function Quiz() {
 
   const saved = loadSavedProgress();
   const [currentQ, setCurrentQ] = useState<number>(saved?.currentQ ?? 0);
-  const [answers, setAnswers] = useState<Record<number, string>>(
+  const [answers, setAnswers] = useState<Record<number, DnaAnswerValue>>(
     saved?.answers ?? {},
   );
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<DnaAnswerValue | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const question = quizQuestions[currentQ];
-  const total = quizQuestions.length;
+  const question = ACTIVE_ENTREPRENEUR_DNA_V2_QUESTIONS[currentQ];
+  const total = ACTIVE_ENTREPRENEUR_DNA_V2_QUESTIONS.length;
   const progress = (currentQ / total) * 100;
 
   const submitMutation = useMutation({
-    mutationFn: async (finalAnswers: Record<number, string>) => {
-      const { dnaType, secondaryDnaType, businessScores } =
-        scoreQuiz(finalAnswers);
+    mutationFn: async (finalAnswers: Record<number, DnaAnswerValue>) => {
+      const answerProfile = ACTIVE_ENTREPRENEUR_DNA_V2_QUESTIONS.map(
+        (matrixQuestion) => ({
+          questionId: matrixQuestion.id,
+          value: finalAnswers[matrixQuestion.id],
+        }),
+      );
+      const result = createEntrepreneurDnaV2Result(answerProfile);
 
-      // Always write to localStorage FIRST using camelCase format.
-      // This ensures the rest of the app has the correct data regardless of
-      // whether the DB save succeeds — and avoids any snake_case confusion
-      // from spreading a raw Supabase row into wbe_result.
-      const localResult = { dnaType, secondaryDnaType, businessScores };
-      localStorage.setItem("wbe_result", JSON.stringify(localResult));
+      // V2 is stored separately. Historical V1 wbe_result data is never
+      // migrated, rescored, or overwritten by a new V2 completion.
+      localStorage.setItem(V2_RESULT_STORAGE_KEY, JSON.stringify(result));
+      localStorage.setItem(V2_ANSWERS_STORAGE_KEY, JSON.stringify(answerProfile));
 
-      // If authenticated, also persist to DB (fire-and-forget on failure so
-      // a DB error never blocks the user from continuing their journey).
-      const userStr = localStorage.getItem("wbe_user");
-      const user = userStr ? JSON.parse(userStr) : null;
-
-      if (user?.id) {
-        try {
-          const res = await apiRequest("POST", "/api/quiz/submit", {
-            userId: user.id,
-            answers: finalAnswers,
-            dnaType,
-            businessScores,
-          });
-          const data = await res.json();
-          console.log("[quiz] DB save result:", data);
-        } catch (err) {
-          // DB save failed — result is already in localStorage, continue
-          console.warn("[quiz] DB save failed (continuing with localStorage):", err);
-        }
-      }
-
-      return localResult;
+      return result;
     },
     onSuccess: () => {
       localStorage.setItem("wbe_quiz_completed", "true");
       localStorage.setItem("quiz_completed", "true");
-      localStorage.removeItem(PROGRESS_KEY);
+      localStorage.removeItem(V2_PROGRESS_STORAGE_KEY);
       saveUserProgress({ quizCompleted: true });
       saveOnboardingStep("quiz");
       navigate("/analyzing");
     },
   });
 
-  const handleSelect = (value: string) => {
+  const handleSelect = (value: DnaAnswerValue) => {
     if (isTransitioning) return;
     setSelected(value);
   };
@@ -95,8 +81,8 @@ export default function Quiz() {
 
     setTimeout(() => {
       if (currentQ + 1 >= total) {
-        localStorage.setItem("quiz_answers", JSON.stringify(newAnswers));
-        localStorage.removeItem(PROGRESS_KEY);
+        localStorage.setItem(V2_ANSWERS_STORAGE_KEY, JSON.stringify(newAnswers));
+        localStorage.removeItem(V2_PROGRESS_STORAGE_KEY);
         submitMutation.mutate(newAnswers);
         setIsTransitioning(false);
       } else {
@@ -105,8 +91,8 @@ export default function Quiz() {
         setSelected(null);
         setIsTransitioning(false);
         const savedProgress = { currentQ: nextQ, answers: newAnswers };
-        localStorage.setItem(PROGRESS_KEY, JSON.stringify(savedProgress));
-        localStorage.setItem("quiz_answers", JSON.stringify(newAnswers));
+        localStorage.setItem(V2_PROGRESS_STORAGE_KEY, JSON.stringify(savedProgress));
+        localStorage.setItem(V2_ANSWERS_STORAGE_KEY, JSON.stringify(newAnswers));
       }
     }, 200);
   };

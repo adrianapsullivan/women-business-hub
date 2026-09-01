@@ -17,6 +17,12 @@ import {
 import { Crown, Mail } from "lucide-react";
 import { createUserProgressRecord, syncUserToDatabase } from "@/lib/progress";
 import { loadOnboardingProgress, resolveOnboardingRoute } from "@/lib/onboarding";
+import {
+  LEGACY_RESULT_STORAGE_KEY,
+  V2_RESULT_STORAGE_KEY,
+  getSafeDnaRoute,
+  readActiveClientDnaResult,
+} from "@/lib/entrepreneur-dna-v2-activation";
 
 const formSchema = z.object({
   firstName: z.string().optional().default(""),
@@ -68,8 +74,13 @@ export default function Signup() {
       hasQuizResult = result.hasQuizResult;
     }
 
-    // Combine DB result with localStorage (same-device backup)
-    hasQuizResult = hasQuizResult || !!localStorage.getItem("wbe_result");
+    const localResult = readActiveClientDnaResult(
+      localStorage.getItem(V2_RESULT_STORAGE_KEY),
+      localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
+    );
+
+    // Combine DB result with either valid local result version.
+    hasQuizResult = hasQuizResult || localResult !== null;
 
     // Load onboarding progress from DB — cross-device
     const onboardingProgress = await loadOnboardingProgress(user.id);
@@ -77,7 +88,16 @@ export default function Signup() {
     // Pass redirectTarget as the fallback so ?redirect=/report is honoured
     // when the DB has no saved progress yet (e.g. first login on a new device
     // or while onboarding saves are failing).
-    setLocation(resolveOnboardingRoute(onboardingProgress, hasQuizResult, redirectTarget));
+    const requestedRoute = resolveOnboardingRoute(
+      onboardingProgress,
+      hasQuizResult,
+      redirectTarget,
+    );
+    setLocation(
+      localResult
+        ? getSafeDnaRoute(requestedRoute, localResult)
+        : requestedRoute,
+    );
   };
 
   // If user is already authenticated and confirmed on load, route them

@@ -5,6 +5,12 @@ import type { DNAType, BusinessScores } from "@/lib/quiz-data";
 import { Button } from "@/components/ui/button";
 import JourneyProgress from "@/components/journey-progress";
 import { saveOnboardingStep } from "@/lib/onboarding";
+import {
+  LEGACY_RESULT_STORAGE_KEY,
+  V2_RESULT_STORAGE_KEY,
+  getSafeDnaRoute,
+  readActiveClientDnaResult,
+} from "@/lib/entrepreneur-dna-v2-activation";
 
 interface BusinessModel {
   key: keyof BusinessScores;
@@ -74,6 +80,18 @@ export default function Compatibility() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    const activeResult = readActiveClientDnaResult(
+      localStorage.getItem(V2_RESULT_STORAGE_KEY),
+      localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
+    );
+    if (
+      activeResult &&
+      getSafeDnaRoute("/compatibility", activeResult) !== "/compatibility"
+    ) {
+      navigate("/report");
+      return;
+    }
+
     const resultStr = localStorage.getItem("wbe_result");
     if (!resultStr) { navigate("/"); return; }
     const result = JSON.parse(resultStr);

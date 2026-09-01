@@ -3,6 +3,12 @@ import { useLocation } from "wouter";
 import supabase from "@/lib/supabase";
 import { syncUserToDatabase } from "@/lib/progress";
 import { loadOnboardingProgress, resolveOnboardingRoute } from "@/lib/onboarding";
+import {
+  LEGACY_RESULT_STORAGE_KEY,
+  V2_RESULT_STORAGE_KEY,
+  getSafeDnaRoute,
+  readActiveClientDnaResult,
+} from "@/lib/entrepreneur-dna-v2-activation";
 
 export default function Welcome() {
   const [, navigate] = useLocation();
@@ -19,14 +25,26 @@ export default function Welcome() {
         // localStorage alone so this works correctly on any device.
         const { hasQuizResult: dbHasQuizResult } = await syncUserToDatabase(user);
 
-        // Combine DB result with localStorage for same-device safety
-        const hasQuizResult = dbHasQuizResult || !!localStorage.getItem("wbe_result");
+        const localResult = readActiveClientDnaResult(
+          localStorage.getItem(V2_RESULT_STORAGE_KEY),
+          localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
+        );
+
+        // Combine DB result with either valid local result version.
+        const hasQuizResult = dbHasQuizResult || localResult !== null;
 
         // Load onboarding progress from DB — works cross-device
         const onboardingProgress = await loadOnboardingProgress(user.id);
 
-        const route = resolveOnboardingRoute(onboardingProgress, hasQuizResult);
-        navigate(route);
+        const requestedRoute = resolveOnboardingRoute(
+          onboardingProgress,
+          hasQuizResult,
+        );
+        navigate(
+          localResult
+            ? getSafeDnaRoute(requestedRoute, localResult)
+            : requestedRoute,
+        );
         return;
       }
 
@@ -34,7 +52,11 @@ export default function Welcome() {
       const quizDone =
         localStorage.getItem("wbe_quiz_completed") === "true" ||
         localStorage.getItem("quiz_completed") === "true";
-      const hasResult = !!localStorage.getItem("wbe_result");
+      const hasResult =
+        readActiveClientDnaResult(
+          localStorage.getItem(V2_RESULT_STORAGE_KEY),
+          localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
+        ) !== null;
       const reportSeen = localStorage.getItem("wbe_report_unlocked") === "true";
       const hasPremium = !!localStorage.getItem("wbe_premium");
       const foundationRaw = localStorage.getItem("empireFoundationData");

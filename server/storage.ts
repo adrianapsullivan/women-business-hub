@@ -1,12 +1,7 @@
-import { getSupabaseClient } from "./supabase";
+// Every storage operation is server-owned. Keep the local name to avoid a
+// broad legacy refactor while binding it only to the service-role client.
+import { getSupabaseAdminClient as getSupabaseClient } from "./supabase";
 import type { FoundationProgressData, FoundationProgress, OnboardingProgressData } from "@shared/schema";
-
-export interface User {
-  id: string;
-  firstName?: string;
-  email: string;
-  password: string;
-}
 
 export interface WaitlistEntry {
   id: string;
@@ -17,43 +12,6 @@ export interface WaitlistEntry {
 }
 
 export const storage = {
-  async getUserByEmail(email: string): Promise<User | null> {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", email)
-      .maybeSingle();
-    if (error) { console.error("[storage.getUserByEmail]", error.message); return null; }
-    if (!data) return null;
-    return {
-      id: data.id,
-      email: data.email,
-      password: data.password,
-      firstName: data.first_name,
-    };
-  },
-
-  async createUser(data: {
-    firstName?: string;
-    email: string;
-    password: string;
-  }): Promise<User> {
-    const supabase = getSupabaseClient();
-    const { data: row, error } = await supabase
-      .from("users")
-      .insert({ email: data.email, password: data.password, first_name: data.firstName })
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return {
-      id: row.id,
-      email: row.email,
-      password: row.password,
-      firstName: row.first_name,
-    };
-  },
-
   async createQuizResult(body: {
     userId?: string;
     answers: object;

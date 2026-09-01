@@ -1,4 +1,5 @@
 import supabase from "@/lib/supabase";
+import { authenticatedFetch } from "@/lib/authenticated-fetch";
 
 export type UserProgress = {
   quizCompleted: boolean;
@@ -93,8 +94,6 @@ export async function syncUserToDatabase(user: {
     const firstName = ((m.first_name ?? m.firstName ?? "") as string) || undefined;
 
     const body: Record<string, unknown> = {
-      userId:    user.id,
-      email:     user.email ?? "",
       firstName,
     };
     if (dnaType) {
@@ -102,7 +101,7 @@ export async function syncUserToDatabase(user: {
       body.answers  = businessScores;
     }
 
-    const resp = await fetch("/api/auth/sync", {
+    const resp = await authenticatedFetch("/api/auth/sync", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(body),
