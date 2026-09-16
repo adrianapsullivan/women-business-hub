@@ -23,6 +23,11 @@ import {
   getSafeDnaRoute,
   readActiveClientDnaResult,
 } from "@/lib/entrepreneur-dna-v2-activation";
+import {
+  getValidSignupUser,
+  resolveInitialSignupAuth,
+  runCancellableAuthenticatedRouting,
+} from "@/lib/signup-auth";
 
 const formSchema = z.object({
   firstName: z.string().optional().default(""),
@@ -45,6 +50,9 @@ export default function Signup() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [initialAuthReady, setInitialAuthReady] = useState(false);
+  const [initialAuthError, setInitialAuthError] = useState(false);
+  const [initialAuthAttempt, setInitialAuthAttempt] = useState(0);
   const submittingRef = useRef(false);
 
   const form = useForm<FormValues>({
@@ -63,53 +71,80 @@ export default function Signup() {
   const routeAuthenticatedUser = async (
     user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> },
     syncedHasQuizResult?: boolean,
+    isCancelled: () => boolean = () => false,
   ) => {
-    localStorage.setItem("wbe_user", JSON.stringify({ id: user.id, email: user.email }));
+    await runCancellableAuthenticatedRouting({
+      isCancelled,
+      synchronize: async () => {
+        // If the caller already ran syncUserToDatabase, accept its result.
+        // Otherwise run it now (e.g. from the useEffect fast-path).
+        let hasQuizResult = syncedHasQuizResult ?? false;
+        if (syncedHasQuizResult === undefined) {
+          const result = await syncUserToDatabase(user);
+          hasQuizResult = result.hasQuizResult;
+        }
 
-    // If the caller already ran syncUserToDatabase, accept its result.
-    // Otherwise run it now (e.g. from the useEffect fast-path).
-    let hasQuizResult = syncedHasQuizResult ?? false;
-    if (syncedHasQuizResult === undefined) {
-      const result = await syncUserToDatabase(user);
-      hasQuizResult = result.hasQuizResult;
-    }
+        const localResult = readActiveClientDnaResult(
+          localStorage.getItem(V2_RESULT_STORAGE_KEY),
+          localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
+        );
 
-    const localResult = readActiveClientDnaResult(
-      localStorage.getItem(V2_RESULT_STORAGE_KEY),
-      localStorage.getItem(LEGACY_RESULT_STORAGE_KEY),
-    );
+        // Combine DB result with either valid local result version.
+        hasQuizResult = hasQuizResult || localResult !== null;
+        return { hasQuizResult, localResult };
+      },
+      loadProgress: () => loadOnboardingProgress(user.id),
+      commit: ({ hasQuizResult, localResult }, onboardingProgress) => {
+        // Commit browser state and navigation only after all awaited work and
+        // cancellation checks have completed.
+        localStorage.setItem("wbe_user", JSON.stringify({ id: user.id, email: user.email }));
 
-    // Combine DB result with either valid local result version.
-    hasQuizResult = hasQuizResult || localResult !== null;
-
-    // Load onboarding progress from DB — cross-device
-    const onboardingProgress = await loadOnboardingProgress(user.id);
-
-    // Pass redirectTarget as the fallback so ?redirect=/report is honoured
-    // when the DB has no saved progress yet (e.g. first login on a new device
-    // or while onboarding saves are failing).
-    const requestedRoute = resolveOnboardingRoute(
-      onboardingProgress,
-      hasQuizResult,
-      redirectTarget,
-    );
-    setLocation(
-      localResult
-        ? getSafeDnaRoute(requestedRoute, localResult)
-        : requestedRoute,
-    );
+        // Pass redirectTarget as the fallback so ?redirect=/report is honoured
+        // when the DB has no saved progress yet (e.g. first login on a new device
+        // or while onboarding saves are failing).
+        const requestedRoute = resolveOnboardingRoute(
+          onboardingProgress,
+          hasQuizResult,
+          redirectTarget,
+        );
+        setLocation(
+          localResult
+            ? getSafeDnaRoute(requestedRoute, localResult)
+            : requestedRoute,
+        );
+      },
+    });
   };
 
-  // If user is already authenticated and confirmed on load, route them
+  // Complete the existing-session check before enabling a new signup attempt.
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user && user.email_confirmed_at) {
+    let cancelled = false;
+    setInitialAuthReady(false);
+    setInitialAuthError(false);
+
+    resolveInitialSignupAuth(
+      async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        return { user };
+      },
+      async (user) => {
         // syncUserToDatabase is called inside routeAuthenticatedUser when
         // syncedHasQuizResult is not provided.
-        await routeAuthenticatedUser(user);
+        await routeAuthenticatedUser(user, undefined, () => cancelled);
+      },
+      () => cancelled,
+    ).then((result) => {
+      if (!cancelled && result === "ready") {
+        setInitialAuthReady(true);
+      } else if (!cancelled && result === "error") {
+        setInitialAuthError(true);
       }
     });
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialAuthAttempt]);
 
   const goBack = () => setLocation(redirectTarget);
 
@@ -145,6 +180,7 @@ export default function Signup() {
   };
 
   const onSubmit = async (values: FormValues) => {
+    if (!initialAuthReady) return;
     if (submittingRef.current) return;
     submittingRef.current = true;
     setAuthError("");
@@ -238,15 +274,18 @@ export default function Signup() {
         return;
       }
 
-      setConfirmedEmail(values.email);
-
-      if (data?.user?.id) {
-        localStorage.setItem(
-          "wbe_user",
-          JSON.stringify({ id: data.user.id, email: data.user.email })
-        );
-        await createUserProgressRecord(data.user.id);
+      const user = getValidSignupUser(data);
+      if (!user) {
+        setAuthError("Account creation failed. Please try again.");
+        return;
       }
+
+      setConfirmedEmail(values.email);
+      localStorage.setItem(
+        "wbe_user",
+        JSON.stringify({ id: user.id, email: user.email })
+      );
+      await createUserProgressRecord(user.id);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
       setAuthError(message);
@@ -255,6 +294,30 @@ export default function Signup() {
       submittingRef.current = false;
     }
   };
+
+  if (initialAuthError) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="max-w-sm w-full text-center space-y-4">
+          <p className="text-white/70 text-sm leading-relaxed">
+            We couldn't connect to the authentication service. Please try again.
+          </p>
+          <Button
+            type="button"
+            onClick={() => setInitialAuthAttempt((attempt) => attempt + 1)}
+            className="w-full bg-[#D4AF37] text-black font-semibold py-6"
+            style={{ height: "auto" }}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!initialAuthReady) {
+    return <div className="min-h-screen bg-black" />;
+  }
 
   // ── Forgot password sent screen ──
   if (forgotSent) {
