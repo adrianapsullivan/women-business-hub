@@ -17,9 +17,11 @@ import {
 } from "./entrepreneur-dna-result";
 
 export const LEGACY_RESULT_STORAGE_KEY = "wbe_result";
-export const V2_RESULT_STORAGE_KEY = "wbe_entrepreneur_dna_v2_result";
-export const V2_ANSWERS_STORAGE_KEY = "wbe_entrepreneur_dna_v2_answers";
-export const V2_PROGRESS_STORAGE_KEY = "wbe_entrepreneur_dna_v2_progress";
+// Keep V1 completion/progress separate from earlier V2 answers. A partially
+// completed V2 questionnaire must never resume against the frozen V1 matrix.
+export const V2_RESULT_STORAGE_KEY = "wbe_entrepreneur_dna_v1_result";
+export const V2_ANSWERS_STORAGE_KEY = "wbe_entrepreneur_dna_v1_answers";
+export const V2_PROGRESS_STORAGE_KEY = "wbe_entrepreneur_dna_v1_progress";
 
 export const ACTIVE_ENTREPRENEUR_DNA_V2_QUESTIONS =
   ENTREPRENEUR_DNA_V2_QUESTIONS;

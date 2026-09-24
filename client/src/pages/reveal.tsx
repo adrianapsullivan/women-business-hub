@@ -46,7 +46,7 @@ export default function Reveal() {
     ) {
       setSecondaryProfile(dnaProfiles[display.secondaryDnaType]);
     }
-    if (display.resultVersion === "2.0-beta") {
+    if (display.resultVersion === "1.0-beta") {
       setV2Display(display);
     }
     saveOnboardingStep("reveal");

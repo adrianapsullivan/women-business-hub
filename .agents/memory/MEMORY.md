@@ -1,0 +1,1 @@
+- [Frozen assessment safeguards](frozen-assessment-safeguards.md) — qualitative construct rules lack an option-tag table; keep interpretations explicit and separate from frozen weights.

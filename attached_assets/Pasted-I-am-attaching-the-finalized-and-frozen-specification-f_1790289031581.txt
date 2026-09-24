@@ -1,0 +1,101 @@
+I am attaching the finalized and frozen specification for the new WBE Entrepreneur DNA assessment: WBE Entrepreneur DNA V1 Frozen Implementation Specification.
+
+I want you to implement this specification exactly as written. This document is the source of truth for the assessment.
+
+IMPORTANT SCOPE AND SAFETY RULES
+
+This is a targeted replacement of the Entrepreneur DNA assessment and its scoring/classification logic. Do not redesign, reinterpret, simplify, improve, rewrite, or substitute any part of the assessment specification.
+
+Preserve exactly:
+
+• all 25 question wordings
+• the exact A, B, C, D answer wording and order
+• every hidden scoring weight
+• the eight DNA identities
+• the evidence facet mapping
+• identity specific calibration logic
+• breadth requirements and construct safeguards
+• the 75 one answer neighbor stability test
+• Dual first classification logic
+• Clear classification logic
+• Blended fallback logic
+• the V1 beta thresholds specified in the document
+
+DO NOT MODIFY unrelated working parts of the application.
+
+In particular, do not modify the existing signup/authentication flow that was previously fixed and validated. Do not modify Supabase configuration or schema, account creation, authentication behavior, report routing, Empire Path selection, dashboard behavior, production routing, or unrelated UI/application functionality unless a direct assessment integration requirement makes a tiny change absolutely necessary.
+
+There is also an unrelated existing SQL migration:
+
+supabase/20260827_entrepreneur_dna_v2_persistence.sql
+
+Do not modify it, stage it, commit it, apply it, or include it in this work.
+
+IMPLEMENTATION PROCESS
+
+Before editing anything, identify the specific existing files you expect to modify and briefly explain why each file is necessary for this assessment implementation.
+
+Then implement the attached specification only within that necessary scope.
+
+Do not stop after replacing the visible questions. The scoring engine and classification behavior must also match the attached specification.
+
+The identity specific calibration must use the exact raw score distribution for each identity under the uniform A/B/C/D response null described in the specification. Do not replace this with a simple percentage of maximum points.
+
+The 75 neighbor stability test must generate exactly three alternative responses for each of the 25 questions and completely rescore each neighbor.
+
+For Dual stability, the same two identities count as retained regardless of which is first and which is second.
+
+Classification order must be:
+
+1. Test Dual
+2. If not Dual, test Clear
+3. Otherwise Blended
+
+Breadth and the construct specific safeguards in the document are part of classification. They must not be ignored simply because an identity has a high calibrated score.
+
+TESTING REQUIREMENTS
+
+Add or update automated tests specifically for the new assessment.
+
+At minimum verify:
+
+• all 25 frozen questions and answer order
+• all hidden scoring mappings
+• the supplied regression fixture produces the exact expected raw totals
+• calibration is deterministic
+• exactly 75 one answer neighbors are generated
+• Dual pair stability ignores first/second ordering
+• classification evaluates Dual before Clear
+• insufficient breadth can prevent Clear/Dual classification
+• construct safeguards are enforced
+• existing signup/authentication tests still pass
+• full test suite passes
+• TypeScript checks pass
+• production build passes
+• git diff --check passes
+
+Use the regression fixture contained in the specification exactly as provided. It is a test fixture only. Do not use that person's answers or expected result to adjust, optimize, or tune the scoring system.
+
+VERY IMPORTANT
+
+Do not publish or deploy yet.
+
+Do not commit or push yet.
+
+When implementation and testing are complete, stop and give me:
+
+The exact files modified
+A concise description of what changed in each file
+Test results, including pass/fail counts
+TypeScript result
+Production build result
+git diff --check result
+git status --short
+Confirmation that the unrelated SQL migration remains untouched
+Confirmation that signup/authentication and other protected flows were not modified
+
+I will review the results before authorizing any commit, push, or deployment.
+
+One important detail: attach the Word document first, then paste this prompt and send them together so Agent clearly understands that the document referenced in the instructions is the attached specification.
+
+And when Agent finishes, do not click publish or tell it to commit anything yet. Send me its complete response or screenshots. I want to inspect exactly what it changed and the test results before we allow the changes to move into production.

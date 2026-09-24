@@ -1,6 +1,6 @@
-export const ASSESSMENT_VERSION = "2.0-beta" as const;
-export const SCORING_VERSION = "2.0-beta" as const;
-export const CALIBRATION_VERSION = "2.0-beta-null-uniform" as const;
+export const ASSESSMENT_VERSION = "1.0-beta" as const;
+export const SCORING_VERSION = "1.0-beta" as const;
+export const CALIBRATION_VERSION = "1.0-beta-null-uniform" as const;
 
 export const CANONICAL_DNA_IDENTITIES = [
   "strategic_builder",
@@ -50,7 +50,9 @@ export interface EntrepreneurDnaQuestion {
 }
 
 export interface ClassificationThresholds {
-  readonly primary_stability_threshold: number;
+  readonly minimum_breadth: number;
+  readonly minimum_stable_neighbors: number;
+  readonly primary_evidence_threshold: number;
   readonly secondary_evidence_threshold: number;
   readonly secondary_max_gap: number;
 }
@@ -58,8 +60,10 @@ export interface ClassificationThresholds {
 export const CLASSIFICATION_THRESHOLDS_BY_SCORING_VERSION: Readonly<
   Record<typeof SCORING_VERSION, ClassificationThresholds>
 > = {
-  "2.0-beta": {
-    primary_stability_threshold: 0.7,
+  "1.0-beta": {
+    minimum_breadth: 3,
+    minimum_stable_neighbors: 53,
+    primary_evidence_threshold: 80,
     secondary_evidence_threshold: 80,
     secondary_max_gap: 8,
   },

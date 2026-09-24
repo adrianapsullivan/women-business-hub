@@ -179,11 +179,11 @@ test("anonymous persistence stores one server-scored immutable V2 result", async
   assert.equal(persisted.record.firstName, "Ada");
   assert.equal(persisted.record.email, "ADA@Example.COM");
   assert.equal(persisted.record.emailNormalized, "ada@example.com");
-  assert.equal(persisted.record.assessmentVersion, "2.0-beta");
-  assert.equal(persisted.record.scoringVersion, "2.0-beta");
+  assert.equal(persisted.record.assessmentVersion, "1.0-beta");
+  assert.equal(persisted.record.scoringVersion, "1.0-beta");
   assert.equal(
     persisted.record.calibrationVersion,
-    "2.0-beta-null-uniform",
+    "1.0-beta-null-uniform",
   );
   assert.equal(
     persisted.record.resultPayload.primary_dna,

@@ -129,9 +129,9 @@ test("all eight raw and calibrated scores are preserved", () => {
 test("assessment, scoring, and calibration versions are preserved", () => {
   const result = validV2Result();
 
-  assert.equal(result.assessment_version, "2.0-beta");
-  assert.equal(result.scoring_version, "2.0-beta");
-  assert.equal(result.calibration_version, "2.0-beta-null-uniform");
+  assert.equal(result.assessment_version, "1.0-beta");
+  assert.equal(result.scoring_version, "1.0-beta");
+  assert.equal(result.calibration_version, "1.0-beta-null-uniform");
 });
 
 test("legacy V1 data cannot accidentally pass the V2 guard", () => {
@@ -171,7 +171,7 @@ test("valid V2 data passes the V2 guard", () => {
 
 test("the display adapter maps canonical V2 IDs explicitly and preserves V1", () => {
   assert.deepEqual(toClientDnaDisplayResult(validV2Result("dual")), {
-    resultVersion: "2.0-beta",
+    resultVersion: "1.0-beta",
     primaryDnaType: "Strategic Builder",
     secondaryDnaType: "Visionary Leader",
     profileClassification: "dual",

@@ -29,6 +29,7 @@ export default function Quiz() {
   const [, navigate] = useLocation();
 
   const saved = loadSavedProgress();
+  const [showInstructions, setShowInstructions] = useState(!saved);
   const [currentQ, setCurrentQ] = useState<number>(saved?.currentQ ?? 0);
   const [answers, setAnswers] = useState<Record<number, DnaAnswerValue>>(
     saved?.answers ?? {},
@@ -50,8 +51,8 @@ export default function Quiz() {
       );
       const result = createEntrepreneurDnaV2Result(answerProfile);
 
-      // V2 is stored separately. Historical V1 wbe_result data is never
-      // migrated, rescored, or overwritten by a new V2 completion.
+      // Frozen V1 results are stored separately. Historical wbe_result and
+      // previous V2 data are not migrated, rescored, or overwritten.
       localStorage.setItem(V2_RESULT_STORAGE_KEY, JSON.stringify(result));
       localStorage.setItem(V2_ANSWERS_STORAGE_KEY, JSON.stringify(answerProfile));
 
@@ -96,6 +97,29 @@ export default function Quiz() {
       }
     }, 200);
   };
+
+  if (showInstructions) {
+    return (
+      <div className="min-h-screen bg-black text-white px-6 py-10 flex items-center">
+        <div className="max-w-sm mx-auto space-y-5">
+          <h1 className="text-2xl font-bold" style={{ fontFamily: "Playfair Display, serif" }}>
+            Entrepreneur DNA Assessment
+          </h1>
+          <div className="space-y-4 text-sm leading-relaxed text-white/75">
+            <p>There are no right or wrong answers.</p>
+            <p>This assessment is about you, not the business you currently have or the business you think you should build.</p>
+            <p>As you answer, imagine you have reasonable access to the time, tools, information and support you need. Don’t choose an answer simply because your current circumstances require it.</p>
+            <p>Choose what feels most naturally like you when you have the freedom to choose.</p>
+            <p>If two answers feel true, choose the one you would naturally be drawn to first.</p>
+            <p>Don’t overthink it. Your first instinct is often the most revealing.</p>
+          </div>
+          <Button onClick={() => setShowInstructions(false)} className="w-full bg-[#D4AF37] text-black font-semibold">
+            Begin Assessment
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black flex flex-col px-6 py-8 relative overflow-hidden">

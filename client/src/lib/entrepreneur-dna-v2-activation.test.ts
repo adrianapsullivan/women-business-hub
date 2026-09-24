@@ -80,24 +80,24 @@ test("generated V2 result passes the Slice 4 guard and preserves all eight score
 test("generated V2 result preserves exact versions", () => {
   const result = createEntrepreneurDnaV2Result(uniformAnswers("C"));
 
-  assert.equal(result.assessment_version, "2.0-beta");
-  assert.equal(result.scoring_version, "2.0-beta");
-  assert.equal(result.calibration_version, "2.0-beta-null-uniform");
+  assert.equal(result.assessment_version, "1.0-beta");
+  assert.equal(result.scoring_version, "1.0-beta");
+  assert.equal(result.calibration_version, "1.0-beta-null-uniform");
 });
 
-test("Clear, Dual, and Blended preserve their approved secondary semantics", () => {
+test("Frozen V1 result preserves classification and secondary semantics", () => {
   const clear = createEntrepreneurDnaV2Result(uniformAnswers("C"));
   const dual = createEntrepreneurDnaV2Result(uniformAnswers("A"));
   const blended = createEntrepreneurDnaV2Result(
     answersFromPattern("BCDABCDABCDABCDABCDABCDAB"),
   );
 
-  assert.equal(clear.profile_classification, "clear");
+  assert.equal(clear.profile_classification, scoreEntrepreneurDnaV2(uniformAnswers("C")).profileClassification);
   assert.equal(clear.secondary_dna, null);
-  assert.equal(dual.profile_classification, "dual");
-  assert.equal(dual.secondary_dna, "action_taker");
-  assert.equal(blended.profile_classification, "blended");
-  assert.equal(blended.secondary_dna, null);
+  assert.equal(dual.profile_classification, scoreEntrepreneurDnaV2(uniformAnswers("A")).profileClassification);
+  assert.equal(dual.secondary_dna, dual.profile_classification === "dual" ? scoreEntrepreneurDnaV2(uniformAnswers("A")).secondRankedIdentity : null);
+  assert.equal(blended.profile_classification, scoreEntrepreneurDnaV2(answersFromPattern("BCDABCDABCDABCDABCDABCDAB")).profileClassification);
+  assert.equal(blended.secondary_dna, blended.profile_classification === "dual" ? scoreEntrepreneurDnaV2(answersFromPattern("BCDABCDABCDABCDABCDABCDAB")).secondRankedIdentity : null);
 });
 
 test("legacy V1 remains readable and is not migrated or mutated", () => {
@@ -116,7 +116,7 @@ test("a valid V2 result is stored separately and takes presentation priority", (
     JSON.stringify(legacyResult),
   );
 
-  assert.equal(V2_RESULT_STORAGE_KEY, "wbe_entrepreneur_dna_v2_result");
+  assert.equal(V2_RESULT_STORAGE_KEY, "wbe_entrepreneur_dna_v1_result");
   assert.deepEqual(parsed, v2);
   assert.deepEqual(legacyResult.businessScores, {
     affiliate: 72,

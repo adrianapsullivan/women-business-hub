@@ -24,6 +24,9 @@ export type IdentityScoreRecord = Readonly<Record<CanonicalDnaIdentity, number>>
 export interface RankedAnswerProfile {
   readonly rawScores: IdentityScoreRecord;
   readonly calibratedScores: IdentityScoreRecord;
+  readonly evidenceBreadth: IdentityScoreRecord;
+  readonly directEvidenceBreadth: IdentityScoreRecord;
+  readonly constructEvidence: Readonly<Record<CanonicalDnaIdentity, boolean>>;
   readonly orderedIdentities: readonly CanonicalDnaIdentity[];
   readonly primaryIdentity: CanonicalDnaIdentity;
   readonly secondRankedIdentity: CanonicalDnaIdentity;
@@ -32,6 +35,7 @@ export interface RankedAnswerProfile {
 export interface PrimaryStabilityResult {
   readonly primaryStabilityCount: number;
   readonly primaryStability: number;
+  readonly dualPairStabilityCount: number;
   readonly neighborCount: number;
 }
 
@@ -46,6 +50,21 @@ export interface EntrepreneurDnaV2Score
   extends RankedAnswerProfile,
     PrimaryStabilityResult,
     ClassificationResult {}
+
+// Each qualifying option supplies direct evidence of the named construct. Incidental
+// cross-identity points (such as +1 Legacy for a systems answer) do not satisfy it.
+// Freedom needs a meaningful autonomy tradeoff. Legacy needs stewardship
+// or a long-term tradeoff, not incidental systems points.
+const CONSTRUCT_OPTIONS: Readonly<Record<CanonicalDnaIdentity, readonly string[]>> = {
+  strategic_builder: ["1A", "2A", "3B", "4C", "5C", "6D", "7C", "8C", "9B", "10A", "11B", "12D", "13D", "14A", "15C", "21B", "22D", "23B", "24B"],
+  visionary_leader: ["1B", "2D", "3D", "4B", "5B", "6C", "7D", "8D", "11D", "12C", "13C", "18A", "19C", "20B", "21A", "23A", "24A", "25A"],
+  influence_creator: ["2B", "14D", "15B", "16A", "17C", "19A", "20C", "22A"],
+  community_builder: ["2C", "3C", "4D", "6A", "7B", "9C", "10D", "11C", "13B", "14C", "16B", "17B", "18B", "21C", "23C", "24C", "25C"],
+  knowledge_authority: ["1D", "4A", "6B", "8B", "10C", "11A", "14B", "15A", "16C", "17A", "20D", "25B"],
+  action_taker: ["1C", "3A", "7A", "10B", "12B", "19B", "22B"],
+  freedom_strategist: ["13A", "16D", "21D", "23D"],
+  legacy_builder: ["15D", "18C", "19D", "24D", "25D"],
+};
 
 function createIdentityScoreRecord(
   initialValue = 0,
@@ -176,8 +195,40 @@ export function rankIdentityScores(
 }
 
 export function rankAnswerProfile(answers: unknown): RankedAnswerProfile {
-  const rawScores = calculateRawScores(answers);
+  const validatedAnswers = validateAnswerProfile(answers);
+  const rawScores = calculateRawScores(validatedAnswers);
   const calibratedScores = createIdentityScoreRecord();
+  const facets = Object.fromEntries(
+    CANONICAL_DNA_IDENTITIES.map((identity) => [identity, new Set<string>()]),
+  ) as Record<CanonicalDnaIdentity, Set<string>>;
+  const directFacets = Object.fromEntries(
+    CANONICAL_DNA_IDENTITIES.map((identity) => [identity, new Set<string>()]),
+  ) as Record<CanonicalDnaIdentity, Set<string>>;
+  const constructEvidence = Object.fromEntries(
+    CANONICAL_DNA_IDENTITIES.map((identity) => [identity, false]),
+  ) as Record<CanonicalDnaIdentity, boolean>;
+
+  validatedAnswers.forEach((answer, index) => {
+    const question = ENTREPRENEUR_DNA_V2_QUESTIONS[index];
+    const option = question.options.find((candidate) => candidate.value === answer.value)!;
+    for (const identity of CANONICAL_DNA_IDENTITIES) {
+      if ((option.weights[identity] ?? 0) > 0) {
+        facets[identity].add(question.category);
+        if ((option.weights[identity] ?? 0) >= 2) {
+          directFacets[identity].add(question.category);
+        }
+        if (CONSTRUCT_OPTIONS[identity].includes(`${question.id}${answer.value}`)) {
+          constructEvidence[identity] = true;
+        }
+      }
+    }
+  });
+  const evidenceBreadth = Object.freeze(Object.fromEntries(
+    CANONICAL_DNA_IDENTITIES.map((identity) => [identity, facets[identity].size]),
+  ) as Record<CanonicalDnaIdentity, number>);
+  const directEvidenceBreadth = Object.freeze(Object.fromEntries(
+    CANONICAL_DNA_IDENTITIES.map((identity) => [identity, directFacets[identity].size]),
+  ) as Record<CanonicalDnaIdentity, number>);
 
   for (const identity of CANONICAL_DNA_IDENTITIES) {
     calibratedScores[identity] = calculateCalibratedScore(
@@ -195,6 +246,9 @@ export function rankAnswerProfile(answers: unknown): RankedAnswerProfile {
   return Object.freeze({
     rawScores,
     calibratedScores: frozenCalibratedScores,
+    evidenceBreadth,
+    directEvidenceBreadth,
+    constructEvidence: Object.freeze(constructEvidence),
     orderedIdentities,
     primaryIdentity: orderedIdentities[0],
     secondRankedIdentity: orderedIdentities[1],
@@ -240,57 +294,58 @@ export function enumerateSingleAnswerNeighbors(
 export function calculatePrimaryStability(
   answers: unknown,
   originalPrimary: CanonicalDnaIdentity,
+  originalSecondary?: CanonicalDnaIdentity,
 ): PrimaryStabilityResult {
   const neighbors = enumerateSingleAnswerNeighbors(answers);
   let retainedPrimaryCount = 0;
+  let retainedPairCount = 0;
 
   for (const neighbor of neighbors) {
-    if (rankAnswerProfile(neighbor).primaryIdentity === originalPrimary) {
+    const ranking = rankAnswerProfile(neighbor);
+    if (ranking.primaryIdentity === originalPrimary) {
       retainedPrimaryCount += 1;
+    }
+    if (
+      originalSecondary &&
+      ranking.orderedIdentities.slice(0, 2).includes(originalPrimary) &&
+      ranking.orderedIdentities.slice(0, 2).includes(originalSecondary)
+    ) {
+      retainedPairCount += 1;
     }
   }
 
   return Object.freeze({
     primaryStabilityCount: retainedPrimaryCount,
     primaryStability: retainedPrimaryCount / neighbors.length,
+    dualPairStabilityCount: retainedPairCount,
     neighborCount: neighbors.length,
   });
 }
 
 export function classifyRankedProfile(
   ranking: RankedAnswerProfile,
-  primaryStability: number,
+  stability: PrimaryStabilityResult,
 ): ClassificationResult {
-  if (
-    !Number.isFinite(primaryStability) ||
-    primaryStability < 0 ||
-    primaryStability > 1
-  ) {
-    throw new Error(
-      `Primary stability must be between 0 and 1; received ${primaryStability}`,
-    );
-  }
-
-  if (
-    primaryStability <
-    CLASSIFICATION_THRESHOLDS.primary_stability_threshold
-  ) {
-    return Object.freeze({
-      profileClassification: "blended",
-      secondaryDna: null,
-    });
-  }
-
   const primaryCalibratedScore =
     ranking.calibratedScores[ranking.primaryIdentity];
   const secondCalibratedScore =
     ranking.calibratedScores[ranking.secondRankedIdentity];
+  const gap = primaryCalibratedScore - secondCalibratedScore;
+  const hasEvidence = (identity: CanonicalDnaIdentity) =>
+    ranking.evidenceBreadth[identity] >= CLASSIFICATION_THRESHOLDS.minimum_breadth &&
+    ranking.constructEvidence[identity];
+  // "Meaningful multi-facet" Dual evidence means at least two distinct
+  // facets with direct (2- or 3-point), not incidental 1-point, support.
+  const hasDualEvidence = (identity: CanonicalDnaIdentity) =>
+    hasEvidence(identity) && ranking.directEvidenceBreadth[identity] >= 2;
 
+  // Frozen V1: Dual first; a stable pair may exchange first/second place.
   if (
-    secondCalibratedScore >=
-      CLASSIFICATION_THRESHOLDS.secondary_evidence_threshold &&
-    primaryCalibratedScore - secondCalibratedScore <=
-      CLASSIFICATION_THRESHOLDS.secondary_max_gap
+    secondCalibratedScore >= CLASSIFICATION_THRESHOLDS.secondary_evidence_threshold &&
+    gap <= CLASSIFICATION_THRESHOLDS.secondary_max_gap &&
+    hasDualEvidence(ranking.primaryIdentity) &&
+    hasDualEvidence(ranking.secondRankedIdentity) &&
+    stability.dualPairStabilityCount >= CLASSIFICATION_THRESHOLDS.minimum_stable_neighbors
   ) {
     return Object.freeze({
       profileClassification: "dual",
@@ -298,10 +353,16 @@ export function classifyRankedProfile(
     });
   }
 
-  return Object.freeze({
-    profileClassification: "clear",
-    secondaryDna: null,
-  });
+  if (
+    primaryCalibratedScore >= CLASSIFICATION_THRESHOLDS.primary_evidence_threshold &&
+    gap > CLASSIFICATION_THRESHOLDS.secondary_max_gap &&
+    hasEvidence(ranking.primaryIdentity) &&
+    stability.primaryStabilityCount >= CLASSIFICATION_THRESHOLDS.minimum_stable_neighbors
+  ) {
+    return Object.freeze({ profileClassification: "clear", secondaryDna: null });
+  }
+
+  return Object.freeze({ profileClassification: "blended", secondaryDna: null });
 }
 
 export function scoreEntrepreneurDnaV2(
@@ -311,10 +372,11 @@ export function scoreEntrepreneurDnaV2(
   const stability = calculatePrimaryStability(
     answers,
     ranking.primaryIdentity,
+    ranking.secondRankedIdentity,
   );
   const classification = classifyRankedProfile(
     ranking,
-    stability.primaryStability,
+    stability,
   );
 
   return Object.freeze({

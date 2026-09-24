@@ -231,7 +231,7 @@ export default function Report() {
                 With strong traits of {displayResult.secondaryDnaType}
               </p>
             )}
-            {displayResult?.resultVersion === "2.0-beta" &&
+            {displayResult?.resultVersion === "1.0-beta" &&
               displayResult.profileClassification === "blended" && (
                 <p className="text-white/55 text-sm">
                   Blended Entrepreneur DNA profile

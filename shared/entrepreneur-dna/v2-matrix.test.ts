@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHash } from "node:crypto";
 
 import {
   ASSESSMENT_VERSION,
@@ -38,24 +39,26 @@ const EXPECTED_DISPLAY_NAMES = {
 } as const;
 
 const EXPECTED_MAXIMA: Record<CanonicalDnaIdentity, number> = {
-  strategic_builder: 64,
-  visionary_leader: 49,
-  influence_creator: 33,
-  community_builder: 65,
-  knowledge_authority: 48,
-  action_taker: 38,
-  freedom_strategist: 22,
-  legacy_builder: 20,
+  strategic_builder: 57,
+  visionary_leader: 54,
+  influence_creator: 24,
+  community_builder: 66,
+  knowledge_authority: 36,
+  action_taker: 24,
+  freedom_strategist: 23,
+  legacy_builder: 18,
 };
 
-test("declares the approved version identifiers and versioned Beta thresholds", () => {
-  assert.equal(ASSESSMENT_VERSION, "2.0-beta");
-  assert.equal(SCORING_VERSION, "2.0-beta");
-  assert.equal(CALIBRATION_VERSION, "2.0-beta-null-uniform");
+test("declares the frozen V1 version identifiers and Beta thresholds", () => {
+  assert.equal(ASSESSMENT_VERSION, "1.0-beta");
+  assert.equal(SCORING_VERSION, "1.0-beta");
+  assert.equal(CALIBRATION_VERSION, "1.0-beta-null-uniform");
   assert.deepEqual(
     CLASSIFICATION_THRESHOLDS_BY_SCORING_VERSION[SCORING_VERSION],
     {
-      primary_stability_threshold: 0.7,
+      minimum_breadth: 3,
+      minimum_stable_neighbors: 53,
+      primary_evidence_threshold: 80,
       secondary_evidence_threshold: 80,
       secondary_max_gap: 8,
     },
@@ -86,6 +89,23 @@ test("contains exactly 25 sequential questions with four A-D answers", () => {
   });
 });
 
+test("locks all 25 question texts, 100 ordered answers and hidden scoring maps", () => {
+  // This digest was independently checked against the frozen Word document.
+  const instrument = ENTREPRENEUR_DNA_V2_QUESTIONS.map((question) => ({
+    question: question.question,
+    category: question.category,
+    options: question.options.map((option) => ({
+      value: option.value,
+      label: option.label,
+      weights: option.weights,
+    })),
+  }));
+  assert.equal(
+    createHash("sha256").update(JSON.stringify(instrument)).digest("hex"),
+    "8c19f011381bfc6dc1457361c042a918939f72134322f7c6befcb197dc391b99",
+  );
+});
+
 test("uses only canonical identity IDs and non-negative integer evidence weights from 1 to 3", () => {
   const canonical = new Set<string>(CANONICAL_DNA_IDENTITIES);
 
@@ -100,12 +120,18 @@ test("uses only canonical identity IDs and non-negative integer evidence weights
   }
 });
 
-test("marks only Q15 as potentially redundant with Q13", () => {
-  const flagged = ENTREPRENEUR_DNA_V2_QUESTIONS
-    .filter((question) => question.beta_analysis?.possible_redundancy_with_q13)
-    .map((question) => question.id);
-
-  assert.deepEqual(flagged, [15]);
+test("preserves the frozen evidence facet sequence", () => {
+  assert.deepEqual(ENTREPRENEUR_DNA_V2_QUESTIONS.map((q) => q.category), [
+    "Natural Instinct", "People Orientation", "Motivation", "People Orientation",
+    "Growth Orientation", "Intrinsic Energy", "Reward and Satisfaction",
+    "Decision Style", "Growth Orientation", "Problem Solving", "Intrinsic Energy",
+    "Decision Style", "Meaningful Tradeoff", "People Orientation",
+    "Reward and Long Term Orientation", "Meaningful Tradeoff",
+    "People and Delivery Orientation", "Long Term Orientation",
+    "Opportunity and Growth Orientation", "Intrinsic Energy", "Meaningful Tradeoff",
+    "Problem Solving", "Meaningful Tradeoff", "Long Term Orientation",
+    "Long Term Orientation and Reward",
+  ]);
 });
 
 test("independently derives the approved theoretical maxima from the matrix", () => {
