@@ -50,7 +50,7 @@ function syntheticRanking(
     rawScores: scores(),
     calibratedScores,
     evidenceBreadth: scores({ [primary]: 3, [second]: 3 }),
-    directEvidenceBreadth: scores({ [primary]: 2, [second]: 2 }),
+    directEvidenceBreadth: scores({ [primary]: 3, [second]: 3 }),
     constructEvidence: evidence({ [primary]: true, [second]: true }),
     orderedIdentities: rankIdentityScores(scores(), calibratedScores),
     primaryIdentity: primary,
@@ -129,19 +129,69 @@ test("Dual is evaluated before Clear and needs a stable pair, breadth and both s
     profileClassification: "dual", secondaryDna: "visionary_leader",
   });
   assert.equal(classifyRankedProfile(ranking, stability(75, 52)).profileClassification, "blended");
-  assert.equal(classifyRankedProfile({ ...ranking, evidenceBreadth: scores({ strategic_builder: 3, visionary_leader: 2 }) }, stability(75, 75)).profileClassification, "blended");
-  assert.equal(classifyRankedProfile({ ...ranking, directEvidenceBreadth: scores({ strategic_builder: 2, visionary_leader: 1 }) }, stability(75, 75)).profileClassification, "blended");
+  assert.equal(classifyRankedProfile({ ...ranking, directEvidenceBreadth: scores({ strategic_builder: 2, visionary_leader: 3 }) }, stability(75, 75)).profileClassification, "blended");
+  assert.equal(classifyRankedProfile({ ...ranking, directEvidenceBreadth: scores({ strategic_builder: 3, visionary_leader: 2 }) }, stability(75, 75)).profileClassification, "blended");
   assert.equal(classifyRankedProfile({ ...ranking, constructEvidence: evidence({ strategic_builder: true }) }, stability(75, 75)).profileClassification, "blended");
 });
 
-test("Clear requires score at least 80, gap greater than 8, 53 stable neighbors and three facets", () => {
+test("Clear requires score at least 80, gap greater than 8, 53 stable neighbors and three direct facets", () => {
   const ranking = syntheticRanking("strategic_builder", "visionary_leader", 90, 70);
   assert.equal(classifyRankedProfile(ranking, stability(53, 0)).profileClassification, "clear");
   assert.equal(classifyRankedProfile(ranking, stability(52, 75)).profileClassification, "blended");
-  assert.equal(classifyRankedProfile({ ...ranking, evidenceBreadth: scores({ strategic_builder: 2 }) }, stability(75, 75)).profileClassification, "blended");
+  assert.equal(classifyRankedProfile({ ...ranking, directEvidenceBreadth: scores({ strategic_builder: 2 }) }, stability(75, 75)).profileClassification, "blended");
   assert.equal(classifyRankedProfile({ ...ranking, constructEvidence: evidence() }, stability(75, 75)).profileClassification, "blended");
   assert.equal(classifyRankedProfile(syntheticRanking("strategic_builder", "visionary_leader", 79, 60), stability(75, 75)).profileClassification, "blended");
   assert.equal(classifyRankedProfile(syntheticRanking("strategic_builder", "visionary_leader", 90, 82), stability(75, 0)).profileClassification, "blended");
+});
+
+test("three distinct +2/+3 facets satisfy classification breadth", () => {
+  const profile = uniform("A");
+  profile[14] = { questionId: 15, value: "D" };
+  profile[17] = { questionId: 18, value: "C" };
+  profile[18] = { questionId: 19, value: "D" };
+  const observed = rankAnswerProfile(profile);
+  assert.equal(observed.directEvidenceBreadth.legacy_builder, 3);
+  assert.equal(observed.constructEvidence.legacy_builder, true);
+
+  const eligible = {
+    ...syntheticRanking("legacy_builder", "visionary_leader", 90, 70),
+    evidenceBreadth: observed.evidenceBreadth,
+    directEvidenceBreadth: observed.directEvidenceBreadth,
+    constructEvidence: observed.constructEvidence,
+  };
+  assert.equal(classifyRankedProfile(eligible, stability(53, 0)).profileClassification, "clear");
+});
+
+test("a +1 cross-identity point cannot supply a missing third direct facet for Clear or Dual", () => {
+  const profile = uniform("A");
+  profile[14] = { questionId: 15, value: "D" }; // Legacy +3, reward/long-term
+  profile[17] = { questionId: 18, value: "C" }; // Legacy +3, long-term
+  profile[21] = { questionId: 22, value: "D" }; // Legacy +1, problem-solving
+  const observed = rankAnswerProfile(profile);
+  assert.equal(observed.rawScores.legacy_builder, 7);
+  assert.equal(observed.evidenceBreadth.legacy_builder, 3);
+  assert.equal(observed.directEvidenceBreadth.legacy_builder, 2);
+  assert.equal(observed.constructEvidence.legacy_builder, true);
+
+  const clearCandidate = {
+    ...syntheticRanking("legacy_builder", "visionary_leader", 90, 70),
+    evidenceBreadth: observed.evidenceBreadth,
+    directEvidenceBreadth: observed.directEvidenceBreadth,
+    constructEvidence: observed.constructEvidence,
+  };
+  assert.equal(classifyRankedProfile(clearCandidate, stability(75, 75)).profileClassification, "blended");
+
+  const dualCandidate = {
+    ...syntheticRanking("legacy_builder", "visionary_leader"),
+    evidenceBreadth: scores({ legacy_builder: observed.evidenceBreadth.legacy_builder, visionary_leader: 3 }),
+    directEvidenceBreadth: scores({ legacy_builder: observed.directEvidenceBreadth.legacy_builder, visionary_leader: 3 }),
+    constructEvidence: evidence({ legacy_builder: true, visionary_leader: true }),
+  };
+  assert.equal(classifyRankedProfile(dualCandidate, stability(75, 75)).profileClassification, "blended");
+  assert.equal(classifyRankedProfile({
+    ...dualCandidate,
+    directEvidenceBreadth: scores({ legacy_builder: 3, visionary_leader: 2 }),
+  }, stability(75, 75)).profileClassification, "blended");
 });
 
 test("repeated evidence in one facet does not create artificial breadth", () => {

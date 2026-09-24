@@ -332,19 +332,15 @@ export function classifyRankedProfile(
     ranking.calibratedScores[ranking.secondRankedIdentity];
   const gap = primaryCalibratedScore - secondCalibratedScore;
   const hasEvidence = (identity: CanonicalDnaIdentity) =>
-    ranking.evidenceBreadth[identity] >= CLASSIFICATION_THRESHOLDS.minimum_breadth &&
+    ranking.directEvidenceBreadth[identity] >= CLASSIFICATION_THRESHOLDS.minimum_breadth &&
     ranking.constructEvidence[identity];
-  // "Meaningful multi-facet" Dual evidence means at least two distinct
-  // facets with direct (2- or 3-point), not incidental 1-point, support.
-  const hasDualEvidence = (identity: CanonicalDnaIdentity) =>
-    hasEvidence(identity) && ranking.directEvidenceBreadth[identity] >= 2;
 
   // Frozen V1: Dual first; a stable pair may exchange first/second place.
   if (
     secondCalibratedScore >= CLASSIFICATION_THRESHOLDS.secondary_evidence_threshold &&
     gap <= CLASSIFICATION_THRESHOLDS.secondary_max_gap &&
-    hasDualEvidence(ranking.primaryIdentity) &&
-    hasDualEvidence(ranking.secondRankedIdentity) &&
+    hasEvidence(ranking.primaryIdentity) &&
+    hasEvidence(ranking.secondRankedIdentity) &&
     stability.dualPairStabilityCount >= CLASSIFICATION_THRESHOLDS.minimum_stable_neighbors
   ) {
     return Object.freeze({
