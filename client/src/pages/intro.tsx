@@ -71,7 +71,7 @@ export default function Intro() {
             className="text-white/35 text-xs hover:text-white/60 transition-colors"
           >
             Already have an account?{" "}
-            <span className="text-[#D4AF37]/70 underline underline-offset-2">
+            <span className="text-[#D4AF37]/70 underline underline-offset-2 whitespace-nowrap">
               Log in
             </span>
           </button>

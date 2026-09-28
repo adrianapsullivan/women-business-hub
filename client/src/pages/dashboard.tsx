@@ -751,6 +751,7 @@ export default function Dashboard() {
 
                         {/* Mark Complete button — unchanged behavior */}
                         <Button
+                          type="button"
                           onClick={handleMissionComplete}
                           disabled={missionDone || missionSubmitting}
                           data-testid="button-mission-complete"
@@ -796,6 +797,7 @@ export default function Dashboard() {
                         </p>
                       </div>
                       <Button
+                        type="button"
                         onClick={handleMissionComplete}
                         disabled={missionDone || missionSubmitting}
                         data-testid="button-mission-complete"
