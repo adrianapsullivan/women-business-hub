@@ -8,6 +8,11 @@ export type UserProgress = {
   onboardingCompleted?: boolean;
 };
 
+export type SyncUserResult =
+  | { status: "success"; hasQuizResult: boolean }
+  | { status: "identity_conflict" }
+  | { status: "error" };
+
 /**
  * Persist quiz/report/path progress flags to Supabase Auth user_metadata.
  * Supabase updateUser() MERGES the data object, so we only send the fields
@@ -66,8 +71,8 @@ export async function createUserProgressRecord(_userId: string): Promise<void> {
  * Sync a Supabase Auth user into public.users + quiz_results.
  * Safe to call on every login — all DB operations are idempotent upserts.
  *
- * Returns { hasQuizResult } so callers can make routing decisions using
- * DB-verified state instead of relying on localStorage alone (cross-device safe).
+ * Returns a verified success or an explicit failure. A failed sync must never
+ * be interpreted as a successful "no quiz result" response.
  *
  * Side effect: if the server reports a quiz_results row exists but auth
  * metadata does NOT have quiz_completed=true, this function patches metadata
@@ -77,7 +82,7 @@ export async function syncUserToDatabase(user: {
   id: string;
   email?: string | null;
   user_metadata?: Record<string, unknown>;
-}): Promise<{ hasQuizResult: boolean }> {
+}): Promise<SyncUserResult> {
   try {
     const m = user.user_metadata ?? {};
 
@@ -108,19 +113,31 @@ export async function syncUserToDatabase(user: {
     });
 
     if (resp.ok) {
-      const data: { ok: boolean; hasQuizResult: boolean } = await resp.json();
+      const data: unknown = await resp.json();
+      if (
+        !data || typeof data !== "object" ||
+        !("ok" in data) || data.ok !== true ||
+        !("hasQuizResult" in data) || typeof data.hasQuizResult !== "boolean"
+      ) {
+        return { status: "error" };
+      }
       // If quiz_results exists in DB but metadata hasn't been stamped yet,
       // patch metadata now so any metadata-based checks resolve correctly.
       if (data.hasQuizResult && !m.quiz_completed) {
         await saveUserProgress({ quizCompleted: true, reportUnlocked: true });
       }
-      return { hasQuizResult: data.hasQuizResult };
+      return { status: "success", hasQuizResult: data.hasQuizResult };
     }
 
-    return { hasQuizResult: false };
+    if (resp.status === 409) {
+      const data: unknown = await resp.json().catch(() => null);
+      if (data && typeof data === "object" && "code" in data && data.code === "IDENTITY_CONFLICT") {
+        return { status: "identity_conflict" };
+      }
+    }
+    return { status: "error" };
   } catch {
-    // fire-and-forget — never block routing
-    return { hasQuizResult: false };
+    return { status: "error" };
   }
 }
 

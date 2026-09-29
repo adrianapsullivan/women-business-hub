@@ -11,6 +11,17 @@ export interface WaitlistEntry {
   createdAt: string;
 }
 
+export class UserEmailIdentityConflictError extends Error {
+  constructor() {
+    super("Authenticated user conflicts with an existing account");
+    this.name = "UserEmailIdentityConflictError";
+  }
+}
+
+export function isUserEmailIdentityConflict(error: { code?: string; message?: string }): boolean {
+  return error.code === "23505" && /\busers_email_key\b/.test(error.message ?? "");
+}
+
 export const storage = {
   async createQuizResult(body: {
     userId?: string;
@@ -122,7 +133,10 @@ export const storage = {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (error) { console.error("[storage.getQuizResultByUserId]", error.message); return null; }
+    if (error) {
+      console.error("[storage.getQuizResultByUserId] lookup failed, code:", error.code ?? "unknown");
+      throw new Error("quiz_results lookup failed");
+    }
     return data;
   },
 
@@ -508,8 +522,12 @@ export const storage = {
       .upsert(payload, { onConflict: "id", ignoreDuplicates: true });
 
     if (error) {
-      console.error("[sync] users upsert FAILED:", error.message);
-      throw new Error(`users upsert failed: ${error.message}`);
+      // Never log the database detail: it can contain an email or other account data.
+      console.error("[sync] users upsert FAILED, code:", error.code ?? "unknown");
+      if (isUserEmailIdentityConflict(error)) {
+        throw new UserEmailIdentityConflictError();
+      }
+      throw new Error("users upsert failed");
     }
     console.log("[sync] users upsert success — id:", userId);
   },

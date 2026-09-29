@@ -171,3 +171,53 @@ test("runCancellableAuthenticatedRouting commits normal routing once", async () 
   assert.equal(result, "routed");
   assert.deepEqual(committed, ["synced:progress"]);
 });
+
+test("failed sync cannot load onboarding or commit navigation; a manual retry can", async () => {
+  let syncCalls = 0;
+  let progressLoads = 0;
+  const committed: string[] = [];
+  const route = () => runCancellableAuthenticatedRouting({
+    isCancelled: () => false,
+    synchronize: async () => {
+      syncCalls++;
+      if (syncCalls === 1) throw new Error("sync failed");
+      return { hasQuizResult: false };
+    },
+    loadProgress: async () => {
+      progressLoads++;
+      return "/report";
+    },
+    commit: (_syncResult, progress) => committed.push(progress),
+  });
+
+  await assert.rejects(route(), /sync failed/);
+  assert.equal(progressLoads, 0);
+  assert.deepEqual(committed, []);
+  assert.equal(await route(), "routed");
+  assert.equal(syncCalls, 2);
+  assert.equal(progressLoads, 1);
+  assert.deepEqual(committed, ["/report"]);
+});
+
+test("an older sync attempt cannot navigate after a newer attempt starts", async () => {
+  let generation = 1;
+  let finishOldSync!: (value: string) => void;
+  const committed: string[] = [];
+  const oldAttempt = runCancellableAuthenticatedRouting({
+    isCancelled: () => generation !== 1,
+    synchronize: () => new Promise<string>((resolve) => { finishOldSync = resolve; }),
+    loadProgress: async () => "/intro",
+    commit: (_sync, route) => committed.push(route),
+  });
+  generation = 2;
+  const newAttempt = runCancellableAuthenticatedRouting({
+    isCancelled: () => generation !== 2,
+    synchronize: async () => "synced",
+    loadProgress: async () => "/report",
+    commit: (_sync, route) => committed.push(route),
+  });
+  finishOldSync("late result");
+  assert.equal(await oldAttempt, "cancelled");
+  assert.equal(await newAttempt, "routed");
+  assert.deepEqual(committed, ["/report"]);
+});

@@ -1,6 +1,6 @@
 import type { Express, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, UserEmailIdentityConflictError } from "./storage";
 import {
   type FoundationProgressData,
 } from "@shared/schema";
@@ -86,6 +86,14 @@ function sendDnaResultError(res: Response, error: unknown) {
   }
   console.error("[dna/v2] request failed", error);
   return res.status(500).json({ message: "Server error" });
+}
+
+export function sendSyncFailure(res: Response, error: unknown): Response {
+  if (error instanceof UserEmailIdentityConflictError) {
+    return res.status(409).json({ ok: false, code: "IDENTITY_CONFLICT" });
+  }
+  console.error("[sync] request failed");
+  return res.status(500).json({ ok: false, code: "SYNC_FAILED" });
 }
 
 export async function registerRoutes(
@@ -399,7 +407,6 @@ export async function registerRoutes(
     };
 
     console.log("[sync] sync started");
-    console.log("[sync] auth user id:", authenticatedUser.id);
 
     if (userId && rejectMismatchedUserId(userId, authenticatedUser.id)) {
       return res.status(403).json({ ok: false, message: "Forbidden" });
@@ -412,9 +419,7 @@ export async function registerRoutes(
     try {
       await storage.ensureUserRow(authenticatedUser.id, authenticatedUser.email, firstName, dnaType);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("[sync] sync failed — table: users —", msg);
-      return res.status(500).json({ ok: false, failedTable: "users", error: msg });
+      return sendSyncFailure(res, err);
     }
 
     // ── Step 2: ensure quiz_results row ──────────────────────────────────────
@@ -433,9 +438,7 @@ export async function registerRoutes(
         }
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("[sync] sync failed — table: quiz_results —", msg);
-      return res.status(500).json({ ok: false, failedTable: "quiz_results", error: msg });
+      return sendSyncFailure(res, err);
     }
 
     console.log("[sync] sync complete — userId:", authenticatedUser.id, "hasQuizResult:", hasQuizResult);

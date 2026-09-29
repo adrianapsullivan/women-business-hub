@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Crown, Mail } from "lucide-react";
 import { createUserProgressRecord, syncUserToDatabase } from "@/lib/progress";
+import type { SyncUserResult } from "@/lib/progress";
 import { loadOnboardingProgress, resolveOnboardingRoute } from "@/lib/onboarding";
 import {
   LEGACY_RESULT_STORAGE_KEY,
@@ -36,6 +37,13 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+type SyncFailureStatus = Exclude<SyncUserResult["status"], "success">;
+
+class SyncRoutingError extends Error {
+  constructor(readonly status: SyncFailureStatus) {
+    super("Account synchronization failed");
+  }
+}
 
 export default function Signup() {
   const [, setLocation] = useLocation();
@@ -53,7 +61,14 @@ export default function Signup() {
   const [initialAuthReady, setInitialAuthReady] = useState(false);
   const [initialAuthError, setInitialAuthError] = useState(false);
   const [initialAuthAttempt, setInitialAuthAttempt] = useState(0);
+  const [syncFailure, setSyncFailure] = useState<SyncFailureStatus | null>(null);
   const submittingRef = useRef(false);
+  const routingAttemptRef = useRef(0);
+
+  useEffect(() => () => {
+    // Invalidate an in-flight sign-in as well as an existing-session check.
+    routingAttemptRef.current++;
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -70,18 +85,14 @@ export default function Signup() {
    */
   const routeAuthenticatedUser = async (
     user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> },
-    syncedHasQuizResult?: boolean,
     isCancelled: () => boolean = () => false,
   ) => {
     await runCancellableAuthenticatedRouting({
       isCancelled,
       synchronize: async () => {
-        // If the caller already ran syncUserToDatabase, accept its result.
-        // Otherwise run it now (e.g. from the useEffect fast-path).
-        let hasQuizResult = syncedHasQuizResult ?? false;
-        if (syncedHasQuizResult === undefined) {
-          const result = await syncUserToDatabase(user);
-          hasQuizResult = result.hasQuizResult;
+        const result = await syncUserToDatabase(user);
+        if (result.status !== "success") {
+          throw new SyncRoutingError(result.status);
         }
 
         const localResult = readActiveClientDnaResult(
@@ -90,7 +101,7 @@ export default function Signup() {
         );
 
         // Combine DB result with either valid local result version.
-        hasQuizResult = hasQuizResult || localResult !== null;
+        const hasQuizResult = result.hasQuizResult || localResult !== null;
         return { hasQuizResult, localResult };
       },
       loadProgress: () => loadOnboardingProgress(user.id),
@@ -119,6 +130,8 @@ export default function Signup() {
   // Complete the existing-session check before enabling a new signup attempt.
   useEffect(() => {
     let cancelled = false;
+    const attempt = ++routingAttemptRef.current;
+    let syncError: SyncFailureStatus | null = null;
     setInitialAuthReady(false);
     setInitialAuthError(false);
 
@@ -128,21 +141,27 @@ export default function Signup() {
         return { user };
       },
       async (user) => {
-        // syncUserToDatabase is called inside routeAuthenticatedUser when
-        // syncedHasQuizResult is not provided.
-        await routeAuthenticatedUser(user, undefined, () => cancelled);
+        try {
+          await routeAuthenticatedUser(user, () => cancelled || attempt !== routingAttemptRef.current);
+        } catch (error) {
+          if (error instanceof SyncRoutingError) syncError = error.status;
+          throw error;
+        }
       },
-      () => cancelled,
+      () => cancelled || attempt !== routingAttemptRef.current,
     ).then((result) => {
-      if (!cancelled && result === "ready") {
+      if (cancelled || attempt !== routingAttemptRef.current) return;
+      if (result === "ready") {
         setInitialAuthReady(true);
-      } else if (!cancelled && result === "error") {
-        setInitialAuthError(true);
+      } else if (result === "error") {
+        if (syncError) setSyncFailure(syncError);
+        else setInitialAuthError(true);
       }
     });
 
     return () => {
       cancelled = true;
+      if (routingAttemptRef.current === attempt) routingAttemptRef.current++;
     };
   }, [initialAuthAttempt]);
 
@@ -183,6 +202,7 @@ export default function Signup() {
     if (!initialAuthReady) return;
     if (submittingRef.current) return;
     submittingRef.current = true;
+    const attempt = ++routingAttemptRef.current;
     setAuthError("");
     setIsPending(true);
 
@@ -193,6 +213,7 @@ export default function Signup() {
           email: values.email,
           password: values.password,
         });
+        if (attempt !== routingAttemptRef.current) return;
 
         if (error) {
           setAuthError(error.message);
@@ -210,11 +231,8 @@ export default function Signup() {
           return;
         }
 
-        // Sync to DB first, capture whether a quiz result exists in the DB.
-        // This is the cross-device fix: on a new device localStorage is empty
-        // but the DB has the quiz result — syncUserToDatabase returns that fact.
-        const { hasQuizResult: dbHasQuizResult } = await syncUserToDatabase(user);
-        await routeAuthenticatedUser(user, dbHasQuizResult);
+        // One sync per attempt; routing stops before any local fallback on failure.
+        await routeAuthenticatedUser(user, () => attempt !== routingAttemptRef.current);
         return;
       }
 
@@ -287,13 +305,41 @@ export default function Signup() {
       );
       await createUserProgressRecord(user.id);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong.";
-      setAuthError(message);
+      if (attempt === routingAttemptRef.current) {
+        if (err instanceof SyncRoutingError) setSyncFailure(err.status);
+        else setAuthError(err instanceof Error ? err.message : "Something went wrong.");
+      }
     } finally {
       setIsPending(false);
       submittingRef.current = false;
     }
   };
+
+  if (syncFailure) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="max-w-sm w-full text-center space-y-4">
+          <p className="text-white/70 text-sm leading-relaxed" role="alert">
+            {syncFailure === "identity_conflict"
+              ? "We couldn't match this sign-in to your saved account. Your progress hasn't been reset. Please try again later or contact support."
+              : "We couldn't load your account right now. Your progress hasn't been reset. Please try again."}
+          </p>
+          <Button
+            type="button"
+            onClick={() => {
+              routingAttemptRef.current++;
+              setSyncFailure(null);
+              setInitialAuthAttempt((value) => value + 1);
+            }}
+            className="w-full bg-[#D4AF37] text-black font-semibold py-6"
+            style={{ height: "auto" }}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (initialAuthError) {
     return (
@@ -316,7 +362,7 @@ export default function Signup() {
   }
 
   if (!initialAuthReady) {
-    return <div className="min-h-screen bg-black" />;
+    return <div className="min-h-screen bg-black flex items-center justify-center text-white/70">Loading your account…</div>;
   }
 
   // ── Forgot password sent screen ──

@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import supabase from "@/lib/supabase";
 import { syncUserToDatabase } from "@/lib/progress";
+import type { SyncUserResult } from "@/lib/progress";
 import { loadOnboardingProgress, resolveOnboardingRoute } from "@/lib/onboarding";
 import {
   LEGACY_RESULT_STORAGE_KEY,
@@ -12,18 +13,35 @@ import {
 
 export default function Welcome() {
   const [, navigate] = useLocation();
+  const [attempt, setAttempt] = useState(0);
+  const [failure, setFailure] = useState<Exclude<SyncUserResult["status"], "success"> | null>(null);
+  const attemptRef = useRef(0);
 
   useEffect(() => {
+    let cancelled = false;
+    const generation = ++attemptRef.current;
+    const isStale = () => cancelled || generation !== attemptRef.current;
+    setFailure(null);
+
     const go = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const auth = await supabase.auth.getUser().catch(() => null);
+      if (isStale()) return;
+      if (!auth || auth.error) {
+        setFailure("error");
+        return;
+      }
+      const { data: { user } } = auth;
 
       if (user && user.email_confirmed_at) {
         // Always write wbe_user so saveOnboardingStep has an ID to work with
         localStorage.setItem("wbe_user", JSON.stringify({ id: user.id, email: user.email }));
 
-        // syncUserToDatabase returns DB-verified hasQuizResult — never depends on
-        // localStorage alone so this works correctly on any device.
-        const { hasQuizResult: dbHasQuizResult } = await syncUserToDatabase(user);
+        const sync = await syncUserToDatabase(user);
+        if (isStale()) return;
+        if (sync.status !== "success") {
+          setFailure(sync.status);
+          return;
+        }
 
         const localResult = readActiveClientDnaResult(
           localStorage.getItem(V2_RESULT_STORAGE_KEY),
@@ -31,10 +49,11 @@ export default function Welcome() {
         );
 
         // Combine DB result with either valid local result version.
-        const hasQuizResult = dbHasQuizResult || localResult !== null;
+        const hasQuizResult = sync.hasQuizResult || localResult !== null;
 
         // Load onboarding progress from DB — works cross-device
         const onboardingProgress = await loadOnboardingProgress(user.id);
+        if (isStale()) return;
 
         const requestedRoute = resolveOnboardingRoute(
           onboardingProgress,
@@ -48,6 +67,7 @@ export default function Welcome() {
         return;
       }
 
+      if (isStale()) return;
       // No confirmed auth session — use localStorage only for pre-auth routing
       const quizDone =
         localStorage.getItem("wbe_quiz_completed") === "true" ||
@@ -73,8 +93,36 @@ export default function Welcome() {
       else navigate("/intro");
     };
 
-    go();
-  }, [navigate]);
+    void go();
+    return () => {
+      cancelled = true;
+      if (attemptRef.current === generation) attemptRef.current++;
+    };
+  }, [navigate, attempt]);
 
-  return <div className="min-h-screen bg-black" />;
+  if (failure) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="max-w-sm w-full text-center space-y-4">
+          <p className="text-white/70 text-sm leading-relaxed" role="alert">
+            {failure === "identity_conflict"
+              ? "We couldn't match this sign-in to your saved account. Your progress hasn't been reset. Please try again later or contact support."
+              : "We couldn't load your account right now. Your progress hasn't been reset. Please try again."}
+          </p>
+          <button
+            type="button"
+            className="w-full bg-[#D4AF37] text-black font-semibold py-4 rounded-md"
+            onClick={() => {
+              attemptRef.current++;
+              setFailure(null);
+              setAttempt((value) => value + 1);
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return <div className="min-h-screen bg-black flex items-center justify-center text-white/70">Loading your account…</div>;
 }
