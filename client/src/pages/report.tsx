@@ -23,6 +23,11 @@ import supabase from "@/lib/supabase";
 import { saveUserProgress } from "@/lib/progress";
 import { saveOnboardingStep } from "@/lib/onboarding";
 import {
+  createReportAuthGate,
+  readFreshReportUser,
+  type ReportAuthState,
+} from "@/lib/report-auth";
+import {
   LEGACY_RESULT_STORAGE_KEY,
   V2_RESULT_STORAGE_KEY,
   getPostReportRoute,
@@ -34,17 +39,14 @@ import {
   type ClientEntrepreneurDnaResult,
 } from "@/lib/entrepreneur-dna-result";
 
-type AuthState = "loading" | "guest" | "pending" | "unlocked";
-
 export default function Report() {
   const [, navigate] = useLocation();
   const [profile, setProfile] = useState<(typeof dnaProfiles)[DNAType] | null>(null);
   const [clientResult, setClientResult] = useState<ClientEntrepreneurDnaResult | null>(null);
   const [displayResult, setDisplayResult] = useState<ClientDnaDisplayResult | null>(null);
-  const [authState, setAuthState] = useState<AuthState>("loading");
+  const [authState, setAuthState] = useState<ReportAuthState>("loading");
   const [userEmail, setUserEmail] = useState("");
-  // Guard: only call saveUserProgress once per mount, even if onAuthStateChange fires multiple times
-  const progressSavedRef = useRef(false);
+  const authGateRef = useRef<ReturnType<typeof createReportAuthGate> | null>(null);
 
   useEffect(() => {
     const result = readActiveClientDnaResult(
@@ -62,50 +64,51 @@ export default function Report() {
       setProfile(dnaProfiles[display.primaryDnaType]);
     }
 
-    const resolveAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      applySession(session?.user ?? null);
-    };
-
-    resolveAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      applySession(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  // Gate: guests and unconfirmed users are redirected to signup — no partial content shown
-  useEffect(() => {
-    if (authState === "guest" || authState === "pending") {
-      navigate("/signup?redirect=/report");
-    }
-  }, [authState, navigate]);
-
-  const applySession = (user: { id?: string; email?: string | null; email_confirmed_at?: string | null } | null) => {
-    if (!user) {
-      setAuthState("guest");
-      return;
-    }
-    setUserEmail(user.email ?? "");
-    if (user.email_confirmed_at) {
-      localStorage.setItem("wbe_report_unlocked", "true");
-      if (user.id) {
-        localStorage.setItem("wbe_user", JSON.stringify({ id: user.id, email: user.email }));
-        // Guard: only save once per mount — prevents the onAuthStateChange loop
-        // where updateUser() fires a USER_UPDATED event → applySession → updateUser() → loop
-        if (!progressSavedRef.current) {
-          progressSavedRef.current = true;
-          saveUserProgress({ reportUnlocked: true });
-          saveOnboardingStep("report");
+    let active = true;
+    let eventVersion = 0;
+    const gate = createReportAuthGate({
+      getUser: async () => {
+        return readFreshReportUser(await supabase.auth.getUser());
+      },
+      onStateChange: (state, user) => {
+        setAuthState(state);
+        setUserEmail(state === "pending" ? user?.email ?? "" : "");
+        if (state === "guest" || state === "pending") {
+          navigate("/signup?redirect=/report");
         }
+      },
+      onUnlock: (user) => {
+        localStorage.setItem("wbe_report_unlocked", "true");
+        localStorage.setItem("wbe_user", JSON.stringify({ id: user.id, email: user.email }));
+        saveUserProgress({ reportUnlocked: true });
+        saveOnboardingStep("report");
+      },
+    });
+    authGateRef.current = gate;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      const version = ++eventVersion;
+      if (event === "SIGNED_OUT") {
+        gate.signOut();
+      } else if (event !== "INITIAL_SESSION") {
+        // Supabase Auth callbacks must not await another Auth operation.
+        queueMicrotask(() => {
+          if (active && version === eventVersion) void gate.validate();
+        });
       }
-      setAuthState("unlocked");
-    } else {
-      setAuthState("pending");
-    }
-  };
+    });
+    void gate.validate();
+
+    return () => {
+      active = false;
+      ++eventVersion;
+      gate.dispose();
+      subscription.unsubscribe();
+      if (authGateRef.current === gate) {
+        authGateRef.current = null;
+      }
+    };
+  }, [navigate]);
 
   if (!profile || authState === "loading") return null;
 
@@ -530,6 +533,25 @@ export default function Report() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {authState === "error" && (
+          <div className="py-10 space-y-5 text-center" role="alert">
+            <h2 className="text-white text-lg font-semibold">We couldn't verify your account</h2>
+            <p className="text-white/60 text-sm">
+              Please retry your connection or sign in to continue to your full report.
+            </p>
+            <Button onClick={() => void authGateRef.current?.validate()} data-testid="button-retry-report-auth">
+              Retry verification
+            </Button>
+            <button
+              type="button"
+              onClick={() => navigate("/signup?mode=signin&redirect=/report")}
+              className="block mx-auto text-[#D4AF37] text-sm underline"
+            >
+              Sign in
+            </button>
           </div>
         )}
       </div>
