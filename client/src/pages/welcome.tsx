@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
 import { useLocation } from "wouter";
 import supabase from "@/lib/supabase";
 import { syncUserToDatabase } from "@/lib/progress";
@@ -24,13 +25,18 @@ export default function Welcome() {
     setFailure(null);
 
     const go = async () => {
-      const auth = await supabase.auth.getUser().catch(() => null);
+      const auth = await supabase.auth.getUser().catch((error: unknown) => {
+        if (isAuthSessionMissingError(error)) {
+          return { data: { user: null }, error: null };
+        }
+        return null;
+      });
       if (isStale()) return;
-      if (!auth || auth.error) {
+      if (!auth || (auth.error && !isAuthSessionMissingError(auth.error))) {
         setFailure("error");
         return;
       }
-      const { data: { user } } = auth;
+      const user = auth.error ? null : auth.data.user;
 
       if (user && user.email_confirmed_at) {
         // Always write wbe_user so saveOnboardingStep has an ID to work with
